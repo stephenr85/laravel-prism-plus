@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Http;
 use Rushing\PrismCassette\CassetteManager;
+use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\PrismPlus;
 use Rushing\PrismPlus\Providers\CohereRerankProvider;
 use Rushing\PrismPlus\Providers\VoyageRerankProvider;
-use Rushing\PrismPlus\ValueObjects\RerankRequest;
 
 /*
  * Soft-inject acceptance: with prism-cassette NOT installed (it is neither required nor in this

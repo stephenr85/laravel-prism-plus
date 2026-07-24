@@ -2,24 +2,33 @@
 
 declare(strict_types=1);
 
-namespace Rushing\PrismPlus\ValueObjects;
+namespace Rushing\PrismPlus\Data;
+
+use Spatie\LaravelData\Attributes\DataCollectionOf;
+use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * A normalized rerank response: results ordered best-first, regardless of which
  * vendor produced them (Voyage returns them under `data`, Cohere under
  * `results`; both arrive already sorted, but the drivers sort defensively).
+ *
+ * `RerankResponse::from($array)` rehydrates the array-out half of the registry boundary — the typed
+ * facade accessor's single rehydration point — and `->toArray()` dehydrates it back.
  */
-final class RerankResponse
+#[TypeScript]
+class RerankResponse extends Data
 {
     /**
      * @param  list<RerankResult>  $results  Ordered by descending score.
      * @param  array<string, mixed>  $usage  Provider-reported usage/billing, verbatim.
      */
     public function __construct(
-        public readonly string $provider,
-        public readonly string $model,
-        public readonly array $results,
-        public readonly array $usage = [],
+        public string $provider,
+        public string $model,
+        #[DataCollectionOf(RerankResult::class)]
+        public array $results,
+        public array $usage = [],
     ) {}
 
     /**

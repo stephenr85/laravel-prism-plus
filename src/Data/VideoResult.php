@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Rushing\PrismPlus\ValueObjects;
+namespace Rushing\PrismPlus\Data;
+
+use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * A normalized, completed video-generation result. Every async vendor exposes the
@@ -10,7 +13,8 @@ namespace Rushing\PrismPlus\ValueObjects;
  * downloading those bytes to its own servable disk (mirror `LocalImageGenerator`).
  * `bytes` is populated only when the driver itself fetched them.
  */
-final class VideoResult
+#[TypeScript]
+class VideoResult extends Data
 {
     /**
      * @param  string  $provider  The driver that produced this result.
@@ -23,13 +27,13 @@ final class VideoResult
      * @param  array<string, mixed>  $raw  The raw vendor result payload, verbatim.
      */
     public function __construct(
-        public readonly string $provider,
-        public readonly string $jobId,
-        public readonly ?string $url = null,
-        public readonly ?string $bytes = null,
-        public readonly ?string $mimeType = null,
-        public readonly ?int $seconds = null,
-        public readonly ?string $resolution = null,
-        public readonly array $raw = [],
+        public string $provider,
+        public string $jobId,
+        public ?string $url = null,
+        public ?string $bytes = null,
+        public ?string $mimeType = null,
+        public ?int $seconds = null,
+        public ?string $resolution = null,
+        public array $raw = [],
     ) {}
 }

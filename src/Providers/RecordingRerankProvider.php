@@ -6,11 +6,11 @@ namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Contracts\Foundation\Application;
 use Rushing\PrismCassette\CassetteManager;
+use Rushing\PrismPlus\Cassette\RerankCassetteSubject;
 use Rushing\PrismPlus\Contracts\RerankProvider;
+use Rushing\PrismPlus\Data\RerankRequest;
+use Rushing\PrismPlus\Data\RerankResponse;
 use Rushing\PrismPlus\PrismPlusManager;
-use Rushing\PrismPlus\ValueObjects\RerankCassetteSubject;
-use Rushing\PrismPlus\ValueObjects\RerankRequest;
-use Rushing\PrismPlus\ValueObjects\RerankResponse;
 
 /**
  * Wraps a resolved {@see RerankProvider} so rerank calls record/replay through prism-cassette — the

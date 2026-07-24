@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Http;
 use Rushing\PrismPlus\Contracts\RerankProvider;
+use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\PrismPlus;
 use Rushing\PrismPlus\Providers\CohereRerankProvider;
 use Rushing\PrismPlus\Providers\VoyageRerankProvider;
-use Rushing\PrismPlus\ValueObjects\RerankRequest;
 
 $documents = [
     'Berlin is the capital of Germany.',

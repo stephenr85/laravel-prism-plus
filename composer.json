@@ -15,8 +15,25 @@
         "illuminate/contracts": "^11.0|^12.0",
         "illuminate/http": "^11.0|^12.0",
         "illuminate/support": "^11.0|^12.0",
-        "prism-php/prism": "*"
+        "prism-php/prism": "*",
+        "rushing/laravel-popcorn": "*",
+        "spatie/laravel-data": "^4.0|^5.0"
     },
+    "repositories": [
+        {
+            "//": "Local co-dev resolution of the popcorn kernel: when the sibling checkout exists this path repo wins, so standalone dev uses the live package. Both repos here are read only when prism-plus is the composer root (its own standalone test suite); when prism-plus is consumed as a git dependency, composer reads the consuming root's repositories instead, so neither leaks into a shipped lock.",
+            "type": "path",
+            "url": "../laravel-popcorn",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "//": "Git fallback for a fresh standalone clone with no sibling checkout (e.g. the package's own CI), since popcorn is not on Packagist.",
+            "type": "git",
+            "url": "https://github.com/stephenr85/laravel-popcorn.git"
+        }
+    ],
     "suggest": {
         "rushing/prism-cassette": "Record/replay rerank calls as fixtures (soft-inject; no hard dependency)"
     },

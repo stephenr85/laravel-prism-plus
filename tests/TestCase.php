@@ -6,12 +6,14 @@ namespace Rushing\PrismPlus\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
 use Rushing\PrismPlus\PrismPlusServiceProvider;
+use Spatie\LaravelData\LaravelDataServiceProvider;
 
 class TestCase extends Orchestra
 {
     protected function getPackageProviders($app)
     {
         return [
+            LaravelDataServiceProvider::class,
             PrismPlusServiceProvider::class,
         ];
     }

@@ -8,10 +8,10 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Rushing\PrismPlus\Contracts\VideoProvider;
-use Rushing\PrismPlus\Enums\VideoJobStatus;
-use Rushing\PrismPlus\ValueObjects\VideoJob;
-use Rushing\PrismPlus\ValueObjects\VideoRequest;
-use Rushing\PrismPlus\ValueObjects\VideoResult;
+use Rushing\PrismPlus\Data\VideoJob;
+use Rushing\PrismPlus\Data\VideoJobStatus;
+use Rushing\PrismPlus\Data\VideoRequest;
+use Rushing\PrismPlus\Data\VideoResult;
 
 /**
  * fal.ai queue video driver — the recommended aggregator to start with, because one

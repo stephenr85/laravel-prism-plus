@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Rushing\PrismPlus\Contracts;
 
-use Rushing\PrismPlus\ValueObjects\RerankRequest;
-use Rushing\PrismPlus\ValueObjects\RerankResponse;
+use Rushing\PrismPlus\Data\RerankRequest;
+use Rushing\PrismPlus\Data\RerankResponse;
 
 /**
  * A rerank driver. Deliberately NOT a `Prism\Prism\Providers\Provider` subclass:

@@ -9,10 +9,10 @@ use Rushing\PrismCassette\CassetteManager;
 use Rushing\PrismCassette\Contracts\CassetteSerializer;
 use Rushing\PrismCassette\Contracts\RefinesEventMetering;
 use Rushing\PrismCassette\Events\CassetteResolved;
-use Rushing\PrismPlus\ValueObjects\RerankCassetteSubject;
-use Rushing\PrismPlus\ValueObjects\RerankRequest;
-use Rushing\PrismPlus\ValueObjects\RerankResponse;
-use Rushing\PrismPlus\ValueObjects\RerankResult;
+use Rushing\PrismPlus\Cassette\RerankCassetteSubject;
+use Rushing\PrismPlus\Data\RerankRequest;
+use Rushing\PrismPlus\Data\RerankResponse;
+use Rushing\PrismPlus\Data\RerankResult;
 
 /**
  * Tapes PrismPlus rerank through cassette's capability serializer seam. Ships HERE (not in cassette)

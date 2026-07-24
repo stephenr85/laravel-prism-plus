@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Rushing\PrismPlus\Contracts;
 
-use Rushing\PrismPlus\Enums\VideoJobStatus;
-use Rushing\PrismPlus\ValueObjects\VideoJob;
-use Rushing\PrismPlus\ValueObjects\VideoRequest;
-use Rushing\PrismPlus\ValueObjects\VideoResult;
+use Rushing\PrismPlus\Data\VideoJob;
+use Rushing\PrismPlus\Data\VideoJobStatus;
+use Rushing\PrismPlus\Data\VideoRequest;
+use Rushing\PrismPlus\Data\VideoResult;
 
 /**
  * An async video-generation driver. Deliberately NOT a `Prism\Prism\Providers\Provider`

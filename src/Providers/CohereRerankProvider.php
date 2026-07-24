@@ -6,9 +6,9 @@ namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
 use Rushing\PrismPlus\Contracts\RerankProvider;
-use Rushing\PrismPlus\ValueObjects\RerankRequest;
-use Rushing\PrismPlus\ValueObjects\RerankResponse;
-use Rushing\PrismPlus\ValueObjects\RerankResult;
+use Rushing\PrismPlus\Data\RerankRequest;
+use Rushing\PrismPlus\Data\RerankResponse;
+use Rushing\PrismPlus\Data\RerankResult;
 
 /**
  * Cohere Rerank v2. `POST {url}/rerank` where `{url}` already carries the `/v2`

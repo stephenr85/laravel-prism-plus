@@ -2,15 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Rushing\PrismPlus\Enums;
+namespace Rushing\PrismPlus\Data;
+
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * A provider-portable video-job lifecycle state. Every async video vendor
  * (fal.ai, Sora, Veo, Runway…) has its own status vocabulary; each driver maps
- * its vendor states onto these four so the app-side poller never branches on a
+ * its vendor states onto these so the app-side poller never branches on a
  * vendor spelling. (fal.ai: IN_QUEUE→Queued, IN_PROGRESS→Processing,
  * COMPLETED→Completed; a webhook `status: ERROR` or an errored result →Failed.)
+ *
+ * Lives in the `Data` namespace with the rerank/video VOs (moved from the retired
+ * `Rushing\PrismPlus\Enums` namespace).
  */
+#[TypeScript]
 enum VideoJobStatus: string
 {
     case Queued = 'queued';

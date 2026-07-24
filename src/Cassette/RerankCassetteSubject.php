@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Rushing\PrismPlus\ValueObjects;
+namespace Rushing\PrismPlus\Cassette;
+
+use Rushing\PrismPlus\Data\RerankRequest;
 
 /**
  * The taping subject handed to cassette's serializer seam for a rerank call.

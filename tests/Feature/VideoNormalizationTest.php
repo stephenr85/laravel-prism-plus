@@ -5,11 +5,11 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Http;
 use Prism\Prism\ValueObjects\Media\Image;
 use Rushing\PrismPlus\Contracts\VideoProvider;
-use Rushing\PrismPlus\Enums\VideoJobStatus;
+use Rushing\PrismPlus\Data\VideoJob;
+use Rushing\PrismPlus\Data\VideoJobStatus;
+use Rushing\PrismPlus\Data\VideoRequest;
 use Rushing\PrismPlus\PrismPlus;
 use Rushing\PrismPlus\Providers\FalVideoProvider;
-use Rushing\PrismPlus\ValueObjects\VideoJob;
-use Rushing\PrismPlus\ValueObjects\VideoRequest;
 
 it('resolves the default video provider (fal) from Prism credentials', function () {
     expect(app(PrismPlus::class)->videoProvider())

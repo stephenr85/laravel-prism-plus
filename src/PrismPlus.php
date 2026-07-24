@@ -13,16 +13,29 @@ use Prism\Prism\Text\PendingRequest as PendingTextRequest;
 use Rushing\PrismPlus\Audio\PendingAudioRequest;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Contracts\VideoProvider;
-use Rushing\PrismPlus\ValueObjects\RerankRequest;
-use Rushing\PrismPlus\ValueObjects\RerankResponse;
-use Rushing\PrismPlus\ValueObjects\VideoJob;
-use Rushing\PrismPlus\ValueObjects\VideoRequest;
+use Rushing\PrismPlus\Data\RerankRequest;
+use Rushing\PrismPlus\Data\RerankResponse;
+use Rushing\PrismPlus\Data\VideoJob;
+use Rushing\PrismPlus\Data\VideoRequest;
 
 /**
  * The PrismPlus entry point. Prism stays the invocation engine: every modality
  * Prism already owns is DELEGATED to a plain `Prism\Prism\Prism` untouched.
- * Modalities Prism has no slot for (rerank today; audio/video later) are hosted
- * here as parallel first-class modalities via {@see PrismPlusManager}.
+ * Capabilities Prism has no slot for (rerank, video) are hosted here as parallel
+ * first-class capabilities via the {@see PrismPlusManager} registry of registries.
+ *
+ * The load-bearing rule that decides what enters the registry:
+ *
+ *   **PrismPlus capabilities are array-boundary invocables; anything that needs a stream stays a raw
+ *   Prism delegate on this facade.**
+ *
+ * A capability enters the registry only if it is a request→response over popcorn's `array in / array
+ * out` seam — that array boundary is exactly what lets a local PHP driver, an MCP tool, or a tenant
+ * webhook answer it interchangeably. Streaming text with tool-calls cannot be modeled as a single
+ * array→array hop, so `text()`/`structured()`/`embeddings()`/`image()`/`moderation()` remain raw
+ * `$this->prism->*()` delegates and never touch the registry. Rerank and the video *submit* step do
+ * fit the boundary and go through the registry; the video async follow-ups (status/retrieve/cancel)
+ * take a full handle rather than a request, so they stay on the typed driver via {@see VideoProvider()}.
  */
 class PrismPlus
 {
@@ -67,12 +80,19 @@ class PrismPlus
     }
 
     /**
-     * Rerank `documents` by relevance to a query — a modality Prism has no slot
-     * for. Resolves the driver from Prism's own provider credentials.
+     * Rerank `documents` by relevance to a query — a capability Prism has no slot for. THE single,
+     * drift-safe call boundary where the request and response types are paired: resolve the `rerank`
+     * capability registry, pick the provider (argument, else `config('prism-plus.defaults.rerank')`),
+     * invoke over the array boundary with `$request->toArray()`, and rehydrate via
+     * `RerankResponse::from()`. Reuses Prism's own `config('prism.providers.*')` credentials.
      */
     public function rerank(RerankRequest $request, ?string $provider = null): RerankResponse
     {
-        return $this->rerankProvider($provider)->rerank($request);
+        $provider = $provider ?? $this->manager->defaultProvider('rerank');
+
+        return RerankResponse::from(
+            $this->manager->capability('rerank')->invoke(strtolower($provider), $request->toArray()),
+        );
     }
 
     /**
@@ -92,7 +112,13 @@ class PrismPlus
      */
     public function video(VideoRequest $request, ?string $provider = null): VideoJob
     {
-        return $this->videoProvider($provider)->generate($request);
+        $provider = $provider ?? $this->manager->defaultProvider('video');
+
+        // Only the submit step (request→response) crosses the registry; the async follow-ups
+        // (status/retrieve/cancel) take the full handle and stay on the typed driver via videoProvider().
+        return VideoJob::fromArray(
+            $this->manager->capability('video')->invoke(strtolower($provider), $request->toArray()),
+        );
     }
 
     /**

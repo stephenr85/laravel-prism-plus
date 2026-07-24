@@ -4,6 +4,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Capability defaults
+    |--------------------------------------------------------------------------
+    |
+    | The registry-of-registries (see PrismPlusManager) is keyed by capability;
+    | this map names the default provider for each capability, so the typed
+    | facade accessor (`PrismPlus::rerank()`, `PrismPlus::video()`) can pick a
+    | provider when the caller names none. Adding a capability is adding a key
+    | here plus its Data VOs and one typed accessor — no manager machinery.
+    |
+    | This supersedes the per-capability `<capability>.default_provider` keys
+    | below, which are retained (and read through this map) so nothing breaks
+    | before the manager is retired.
+    |
+    */
+
+    'defaults' => [
+        'rerank' => env('PRISM_PLUS_RERANK_PROVIDER', 'voyageai'),
+        'video' => env('PRISM_PLUS_VIDEO_PROVIDER', 'fal'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Rerank
     |--------------------------------------------------------------------------
     |
