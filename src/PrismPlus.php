@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Rushing\PrismPlus;
 
-use Prism\Prism\Audio\PendingRequest as PendingAudioRequest;
 use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
 use Prism\Prism\Images\PendingRequest as PendingImageRequest;
 use Prism\Prism\Moderation\PendingRequest as PendingModerationRequest;
 use Prism\Prism\Prism;
 use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
 use Prism\Prism\Text\PendingRequest as PendingTextRequest;
+use Rushing\PrismPlus\Audio\PendingAudioRequest;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\ValueObjects\RerankRequest;
 use Rushing\PrismPlus\ValueObjects\RerankResponse;
@@ -48,9 +48,14 @@ class PrismPlus
         return $this->prism->image();
     }
 
+    /**
+     * Audio (TTS + STT). Unlike the other existing modalities this is NOT a raw delegate: it returns
+     * PrismPlus's {@see PendingAudioRequest} decorator, which normalizes the provider-shaped `voice`
+     * and `outputFormat` warts over Prism's own audio drivers.
+     */
     public function audio(): PendingAudioRequest
     {
-        return $this->prism->audio();
+        return new PendingAudioRequest($this->prism->audio());
     }
 
     public function moderation(): PendingModerationRequest
