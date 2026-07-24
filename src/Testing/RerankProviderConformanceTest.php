@@ -90,17 +90,11 @@ abstract class RerankProviderConformanceTest extends TestCase
     {
         // A throwaway file store for the record→replay round-trip. A subclass override MUST call
         // parent::getEnvironmentSetUp($app) so this survives alongside its own provider credentials.
+        //
+        // No decoy Prism provider is configured to satisfy cassette's scope-disarmed guard: PrismPlus's
+        // service provider declares rerank directly tape-able via CassetteManager::armCapability(), so
+        // the record/replay scopes are armed for the non-Prism rerank capability on their own.
         $app['config']->set('cassette.stores.file.path', sys_get_temp_dir().'/prism-plus-conformance');
-
-        // Cassette's scope guard fails loud unless at least one Prism-resolvable provider is armed at
-        // boot. PrismPlus rerank taps the cassette engine directly (it is not a native Prism provider),
-        // so arming is incidental here — configure Voyage (a native Prism embeddings provider) purely to
-        // satisfy the guard, so the record/replay scopes work even when the provider under test (e.g.
-        // Cohere rerank) is not itself Prism-resolvable. This never touches the rerank tape path.
-        $app['config']->set('prism.providers.voyageai', [
-            'api_key' => 'test-arming-key',
-            'url' => 'https://api.voyageai.com/v1',
-        ]);
     }
 
     public function test_conforms_to_the_rerank_contract(): void

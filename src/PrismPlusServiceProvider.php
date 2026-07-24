@@ -47,6 +47,13 @@ class PrismPlusServiceProvider extends ServiceProvider
      */
     protected function registerRerankCassetteSerializer(): void
     {
-        $this->app->make(CassetteManager::class)->registerSerializer('rerank', new RerankSerializer);
+        $manager = $this->app->make(CassetteManager::class);
+
+        $manager->registerSerializer('rerank', new RerankSerializer);
+
+        // Rerank is a non-Prism capability — it tapes through CassetteManager::tape() directly, not a
+        // CassetteProvider decorator — so declare it directly tape-able. This satisfies cassette's
+        // scope-disarmed guard without a decoy Prism provider armed just to make record/replay work.
+        $manager->armCapability('rerank');
     }
 }
