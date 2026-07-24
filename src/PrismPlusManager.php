@@ -9,7 +9,6 @@ use Illuminate\Contracts\Foundation\Application;
 use InvalidArgumentException;
 use Rushing\Popcorn\Contracts\Invocable;
 use Rushing\Popcorn\InvocableRegistry;
-use Rushing\PrismCassette\CassetteManager;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Contracts\VideoProvider;
 use Rushing\PrismPlus\Invocables\RerankInvocable;
@@ -181,16 +180,15 @@ class PrismPlusManager
     }
 
     /**
-     * Soft-inject cassette record/replay around a resolved rerank driver. Only interposes the
-     * recorder when prism-cassette is installed — absent, the bare driver is returned and PrismPlus
-     * behaves exactly as before (no hard dependency; see {@see RecordingRerankProvider}).
+     * Wrap a resolved rerank driver in cassette record/replay. Fixture recording is a first-class
+     * prism-plus capability — prism-cassette is a hard dependency (the "plus": Prism plus, among other
+     * goodies, universally-useful fixture recording) — so every resolved driver is wrapped, whether the
+     * caller reaches it through `PrismPlus::rerank()` or holds it directly via `rerankProvider()`. The
+     * wrapper is inert unless a cassette is armed (passthrough runs the driver live), so this changes
+     * nothing for callers who never record; see {@see RecordingRerankProvider}.
      */
     protected function recordable(string $provider, RerankProvider $driver): RerankProvider
     {
-        if (! class_exists(CassetteManager::class)) {
-            return $driver;
-        }
-
         return new RecordingRerankProvider($driver, $this->app, $provider);
     }
 

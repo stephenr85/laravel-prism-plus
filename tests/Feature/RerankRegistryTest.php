@@ -8,6 +8,7 @@ use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\Data\RerankResponse;
 use Rushing\PrismPlus\PrismPlus;
 use Rushing\PrismPlus\PrismPlusManager;
+use Rushing\PrismPlus\Providers\RecordingRerankProvider;
 use Rushing\PrismPlus\Providers\VoyageRerankProvider;
 
 /**
@@ -85,10 +86,13 @@ it('fails loud on an unknown provider rather than a silent empty result', functi
 
 it('the deprecated rerankProvider() shim resolves the built-in driver through the registry', function () {
     // Migration safety: the create*/method_exists dispatch is deleted; the shim must still hand back
-    // a typed driver resolved from the registry (covers the removed public surface).
-    expect(app(PrismPlusManager::class)->rerankProvider('voyageai'))
-        ->toBeInstanceOf(VoyageRerankProvider::class)
-        ->toBeInstanceOf(RerankProvider::class);
+    // a typed driver resolved from the registry (covers the removed public surface). The driver is
+    // recording-wrapped (cassette is a hard dependency); the wrapped vendor is the Voyage reranker.
+    $driver = app(PrismPlusManager::class)->rerankProvider('voyageai');
+
+    expect($driver)->toBeInstanceOf(RerankProvider::class)
+        ->and($driver)->toBeInstanceOf(RecordingRerankProvider::class)
+        ->and($driver->inner())->toBeInstanceOf(VoyageRerankProvider::class);
 });
 
 it('the deprecated rerankProvider() shim adapts a host-registered invocable back to a typed driver', function () {

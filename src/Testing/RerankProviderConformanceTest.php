@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Rushing\PrismPlus\Testing;
 
 use Orchestra\Testbench\TestCase;
+use Rushing\PrismCassette\CassetteManager;
+use Rushing\PrismCassette\CassetteServiceProvider;
+use Rushing\PrismCassette\Exceptions\CassetteMissException;
 use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\Data\RerankResponse;
 use Rushing\PrismPlus\PrismPlus;
@@ -20,9 +23,14 @@ use Spatie\LaravelData\LaravelDataServiceProvider;
  * Deliberately **rerank-specific** (maintainer-confirmed), not generalized at the `Invocable` level.
  * A third-party provider author registers their provider under a capability+provider key, extends this
  * class, points {@see providerName()} at it, and gets the same bar the maintainer's Voyage/Cohere are
- * held to. Drives the typed `PrismPlus::rerank()` accessor so the provider is exercised through the
- * real registry path — which is also what lets a host wrap the same call in the cassette record/replay
- * seam (see the app-side cassette conformance lane) without changing a single assertion.
+ * held to.
+ *
+ * **The default lane is cassette replay.** Because prism-cassette is a hard dependency of prism-plus,
+ * the kit composes the record/replay seam directly: {@see rerank()} records the provider's response
+ * through `PrismPlus::rerank()` → `RecordingRerankProvider` → `CassetteManager` → `RerankSerializer`,
+ * then REPLAYS it and runs the assertions against the replayed response — so conformance is verified
+ * token-free (a concrete subclass arms an `Http::fake` for the record leg) and a replay miss fails
+ * loud, never a silent empty rerank. Point the record leg at a live endpoint for the keyed CI lane.
  *
  * Ships from `src/` (not `tests/`) so consumers can extend it. It is an abstract test — never run on
  * its own — so its reference to the dev-time testbench base is only resolved when a subclass runs.
@@ -37,25 +45,62 @@ abstract class RerankProviderConformanceTest extends TestCase
      */
     abstract protected function providerName(): string;
 
+    /**
+     * Record the provider's response through the real cassette seam, then replay it and hand back the
+     * REPLAYED response — so every assertion runs against a cassette, not a live call.
+     */
     protected function rerank(bool $returnDocuments = false): RerankResponse
     {
-        return app(PrismPlus::class)->rerank(
-            new RerankRequest(
-                query: $this->conformanceQuery(),
-                documents: $this->conformanceDocuments(),
-                topK: $this->conformanceTopK(),
-                returnDocuments: $returnDocuments,
-            ),
-            $this->providerName(),
+        $request = new RerankRequest(
+            query: $this->conformanceQuery(),
+            documents: $this->conformanceDocuments(),
+            topK: $this->conformanceTopK(),
+            returnDocuments: $returnDocuments,
         );
+
+        $manager = app(CassetteManager::class);
+        $group = $this->conformanceGroup();
+
+        // Record leg: fed by the concrete's armed Http::fake (token-free) or a live endpoint.
+        $manager->group($group)->record()->play(
+            fn () => app(PrismPlus::class)->rerank($request, $this->providerName()),
+        );
+
+        // Replay leg: the assertions below run against the cassette-replayed response.
+        return $manager->group($group)->replay()->play(
+            fn () => app(PrismPlus::class)->rerank($request, $this->providerName()),
+        );
+    }
+
+    protected function conformanceGroup(): string
+    {
+        return 'conformance-'.$this->providerName();
     }
 
     protected function getPackageProviders($app): array
     {
         return [
             LaravelDataServiceProvider::class,
+            CassetteServiceProvider::class,
             PrismPlusServiceProvider::class,
         ];
+    }
+
+    protected function getEnvironmentSetUp($app): void
+    {
+        // A throwaway file store for the record→replay round-trip. A subclass override MUST call
+        // parent::getEnvironmentSetUp($app) so this survives alongside its own provider credentials.
+        $app['config']->set('cassette.stores.file.path', sys_get_temp_dir().'/prism-plus-conformance');
+
+        // Cassette's scope guard fails loud unless at least one Prism-resolvable provider is armed at
+        // boot. PrismPlus rerank taps the cassette engine directly (it is not a native Prism provider),
+        // so arming is incidental here — configure Voyage (a native Prism embeddings provider) purely to
+        // satisfy the guard, so the record/replay scopes work even when the provider under test (e.g.
+        // Cohere rerank) is not itself Prism-resolvable. This never touches the rerank tape path.
+        $app['config']->set('prism.providers.voyageai', [
+            'api_key' => 'test-arming-key',
+            'url' => 'https://api.voyageai.com/v1',
+        ]);
     }
 
     public function test_conforms_to_the_rerank_contract(): void
@@ -66,5 +111,17 @@ abstract class RerankProviderConformanceTest extends TestCase
     public function test_documents_are_echoed_when_requested(): void
     {
         $this->assertDocumentsEchoed($this->rerank(returnDocuments: true));
+    }
+
+    public function test_a_replay_miss_fails_loud(): void
+    {
+        $this->expectException(CassetteMissException::class);
+
+        app(CassetteManager::class)->group($this->conformanceGroup().'-miss')->replay()->play(
+            fn () => app(PrismPlus::class)->rerank(
+                new RerankRequest(query: 'nothing recorded for conformance', documents: ['x', 'y'], topK: 2),
+                $this->providerName(),
+            ),
+        );
     }
 }

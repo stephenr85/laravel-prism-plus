@@ -7,6 +7,7 @@ use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\PrismPlus;
 use Rushing\PrismPlus\Providers\CohereRerankProvider;
+use Rushing\PrismPlus\Providers\RecordingRerankProvider;
 use Rushing\PrismPlus\Providers\VoyageRerankProvider;
 
 $documents = [
@@ -16,13 +17,19 @@ $documents = [
 ];
 
 it('resolves the default rerank provider (voyage) from Prism credentials', function () {
-    expect(app(PrismPlus::class)->rerankProvider())
-        ->toBeInstanceOf(VoyageRerankProvider::class);
+    // The resolved driver is recording-wrapped (prism-cassette is a hard dependency); the wrapped
+    // vendor driver is the Voyage reranker.
+    $provider = app(PrismPlus::class)->rerankProvider();
+
+    expect($provider)->toBeInstanceOf(RecordingRerankProvider::class)
+        ->and($provider->inner())->toBeInstanceOf(VoyageRerankProvider::class);
 });
 
 it('resolves cohere by name', function () {
-    expect(app(PrismPlus::class)->rerankProvider('cohere'))
-        ->toBeInstanceOf(CohereRerankProvider::class);
+    $provider = app(PrismPlus::class)->rerankProvider('cohere');
+
+    expect($provider)->toBeInstanceOf(RecordingRerankProvider::class)
+        ->and($provider->inner())->toBeInstanceOf(CohereRerankProvider::class);
 });
 
 it('throws on an unknown rerank provider', function () {

@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Http;
 use Rushing\PrismPlus\Testing\RerankProviderConformanceTest;
 
 /**
- * Cohere held to the shipped conformance kit — same bar as Voyage. Token-free `Http::fake()` lane by
- * default; set `CONFORMANCE_LIVE=1` and `COHERE_API_KEY=…` for the live keyed lane. The cassette-
- * replayed lane lives in the host app (see the Voyage class docblock).
+ * Cohere held to the shipped conformance kit — same cassette-replay default lane as Voyage; this class
+ * arms only the token-free `Http::fake()` record leg. Set `CONFORMANCE_LIVE=1` and `COHERE_API_KEY=…`
+ * to point the record leg at the real endpoint (the keyed CI lane).
  */
 final class CohereRerankConformanceTest extends RerankProviderConformanceTest
 {
@@ -21,6 +21,8 @@ final class CohereRerankConformanceTest extends RerankProviderConformanceTest
 
     protected function getEnvironmentSetUp($app): void
     {
+        parent::getEnvironmentSetUp($app); // cassette store for the record→replay round-trip
+
         $app['config']->set('prism.providers.cohere', [
             'api_key' => (string) (getenv('COHERE_API_KEY') ?: 'test-cohere-key'),
             'url' => 'https://api.cohere.com/v2',

@@ -34,9 +34,10 @@ class PrismPlusServiceProvider extends ServiceProvider
     }
 
     /**
-     * Teach prism-cassette to tape the rerank capability — a soft-inject. Guarded by class_exists so
-     * PrismPlus never hard-depends on cassette; when cassette is installed, the serializer (which owns
-     * PrismPlus's RerankRequest/RerankResponse types) registers via cassette's public extension seam.
+     * Teach prism-cassette to tape the rerank capability. prism-cassette is a hard dependency of
+     * prism-plus, so this always registers — the serializer, which owns PrismPlus's
+     * RerankRequest/RerankResponse types ("who owns the response type owns the serializer"), plugs
+     * into cassette's public extension seam.
      *
      * Registers DIRECTLY on the resolved manager (not via afterResolving): CassetteServiceProvider
      * resolves and caches the CassetteManager singleton during its own boot (armProviders), so an
@@ -46,10 +47,6 @@ class PrismPlusServiceProvider extends ServiceProvider
      */
     protected function registerRerankCassetteSerializer(): void
     {
-        if (! class_exists(CassetteManager::class)) {
-            return;
-        }
-
         $this->app->make(CassetteManager::class)->registerSerializer('rerank', new RerankSerializer);
     }
 }

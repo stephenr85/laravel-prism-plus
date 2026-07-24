@@ -15,12 +15,13 @@ use Rushing\PrismPlus\PrismPlusManager;
 /**
  * Wraps a resolved {@see RerankProvider} so rerank calls record/replay through prism-cassette — the
  * interception seam Prism can't give rerank (Prism has no rerank slot, so a rerank call never passes
- * through cassette's provider decorator). Interposed by {@see PrismPlusManager}
- * ONLY when prism-cassette is installed, so absent cassette leaves PrismPlus behaving exactly as
- * before (the driver is returned bare) — a soft-inject with no hard dependency.
+ * through cassette's provider decorator). {@see PrismPlusManager} interposes it around every resolved
+ * driver: prism-cassette is a hard dependency of prism-plus, so recording is always available and
+ * inert unless a cassette is armed (an un-scoped call runs the inner driver live via passthrough).
  *
  * Wrapping the resolved provider (not just PrismPlus::rerank()) means callers who hold the driver
- * directly via rerankProvider()->rerank() are taped too — no bypass.
+ * directly via rerankProvider()->rerank() are taped too — no bypass. {@see inner()} exposes the
+ * wrapped vendor driver for introspection.
  */
 final class RecordingRerankProvider implements RerankProvider
 {
@@ -30,18 +31,19 @@ final class RecordingRerankProvider implements RerankProvider
         private readonly string $provider,
     ) {}
 
+    /**
+     * The wrapped vendor driver (e.g. the concrete {@see VoyageRerankProvider}). Recording is a
+     * transparent decorator, so the underlying provider is available for callers that need its type.
+     */
+    public function inner(): RerankProvider
+    {
+        return $this->inner;
+    }
+
     public function rerank(RerankRequest $request): RerankResponse
     {
-        $managerClass = CassetteManager::class;
-
-        // Defensive: the manager only wraps when cassette is installed, but if its container binding
-        // is somehow absent, run live rather than fail.
-        if (! class_exists($managerClass) || ! $this->app->bound($managerClass)) {
-            return $this->inner->rerank($request);
-        }
-
         /** @var CassetteManager $manager */
-        $manager = $this->app->make($managerClass);
+        $manager = $this->app->make(CassetteManager::class);
 
         $subject = new RerankCassetteSubject($this->provider, $request);
 
