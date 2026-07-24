@@ -17,6 +17,9 @@
         "illuminate/support": "^11.0|^12.0",
         "prism-php/prism": "*"
     },
+    "suggest": {
+        "rushing/prism-cassette": "Record/replay rerank calls as fixtures (soft-inject; no hard dependency)"
+    },
     "require-dev": {
         "laravel/pint": "^1.0",
         "orchestra/testbench": "^9.0|^10.0",

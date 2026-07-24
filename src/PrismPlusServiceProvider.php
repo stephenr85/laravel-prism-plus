@@ -6,6 +6,8 @@ namespace Rushing\PrismPlus;
 
 use Illuminate\Support\ServiceProvider;
 use Prism\Prism\Prism;
+use Rushing\PrismCassette\CassetteManager;
+use Rushing\PrismPlus\Serializers\RerankSerializer;
 
 class PrismPlusServiceProvider extends ServiceProvider
 {
@@ -27,5 +29,27 @@ class PrismPlusServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/prism-plus.php' => config_path('prism-plus.php'),
         ], 'prism-plus-config');
+
+        $this->registerRerankCassetteSerializer();
+    }
+
+    /**
+     * Teach prism-cassette to tape the rerank capability — a soft-inject. Guarded by class_exists so
+     * PrismPlus never hard-depends on cassette; when cassette is installed, the serializer (which owns
+     * PrismPlus's RerankRequest/RerankResponse types) registers via cassette's public extension seam.
+     *
+     * Registers DIRECTLY on the resolved manager (not via afterResolving): CassetteServiceProvider
+     * resolves and caches the CassetteManager singleton during its own boot (armProviders), so an
+     * afterResolving callback attached in a boot() can miss that already-resolved instance. Resolving
+     * it here in boot() is safe and order-independent — make() either returns the cached singleton or
+     * resolves it (firing cassette's own tts/stt registration).
+     */
+    protected function registerRerankCassetteSerializer(): void
+    {
+        if (! class_exists(CassetteManager::class)) {
+            return;
+        }
+
+        $this->app->make(CassetteManager::class)->registerSerializer('rerank', new RerankSerializer);
     }
 }

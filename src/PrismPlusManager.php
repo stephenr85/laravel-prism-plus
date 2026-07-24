@@ -7,10 +7,12 @@ namespace Rushing\PrismPlus;
 use Closure;
 use Illuminate\Contracts\Foundation\Application;
 use InvalidArgumentException;
+use Rushing\PrismCassette\CassetteManager;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Contracts\VideoProvider;
 use Rushing\PrismPlus\Providers\CohereRerankProvider;
 use Rushing\PrismPlus\Providers\FalVideoProvider;
+use Rushing\PrismPlus\Providers\RecordingRerankProvider;
 use Rushing\PrismPlus\Providers\VoyageRerankProvider;
 
 /**
@@ -56,16 +58,30 @@ class PrismPlusManager
         $config = array_merge($this->getConfig($name), $providerConfig);
 
         if (isset($this->customCreators[$name])) {
-            return $this->callCustomCreator($name, $config);
+            return $this->recordable($name, $this->callCustomCreator($name, $config));
         }
 
         $factory = sprintf('create%sReranker', ucfirst($name));
 
         if (method_exists($this, $factory)) {
-            return $this->{$factory}($config);
+            return $this->recordable($name, $this->{$factory}($config));
         }
 
         throw new InvalidArgumentException("Rerank provider [{$name}] is not supported.");
+    }
+
+    /**
+     * Soft-inject cassette record/replay around a resolved rerank driver. Only interposes the
+     * recorder when prism-cassette is installed — absent, the bare driver is returned and PrismPlus
+     * behaves exactly as before (no hard dependency; see {@see RecordingRerankProvider}).
+     */
+    protected function recordable(string $provider, RerankProvider $driver): RerankProvider
+    {
+        if (! class_exists(CassetteManager::class)) {
+            return $driver;
+        }
+
+        return new RecordingRerankProvider($driver, $this->app, $provider);
     }
 
     /**
