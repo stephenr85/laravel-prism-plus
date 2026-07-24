@@ -8,7 +8,9 @@ use Closure;
 use Illuminate\Contracts\Foundation\Application;
 use InvalidArgumentException;
 use Rushing\PrismPlus\Contracts\RerankProvider;
+use Rushing\PrismPlus\Contracts\VideoProvider;
 use Rushing\PrismPlus\Providers\CohereRerankProvider;
+use Rushing\PrismPlus\Providers\FalVideoProvider;
 use Rushing\PrismPlus\Providers\VoyageRerankProvider;
 
 /**
@@ -25,6 +27,15 @@ class PrismPlusManager
 {
     /** @var array<string, Closure> */
     protected array $customCreators = [];
+
+    /**
+     * Custom VIDEO creators are kept separate from {@see $customCreators} (rerank):
+     * both maps are keyed by bare provider name, and a single map would let a `fal`
+     * video driver and a same-named rerank driver collide.
+     *
+     * @var array<string, Closure>
+     */
+    protected array $videoCreators = [];
 
     public function __construct(
         protected Application $app,
@@ -68,9 +79,53 @@ class PrismPlusManager
         return $this;
     }
 
+    /**
+     * Resolve an async video driver by provider name (defaults to the configured
+     * default provider). Mirrors {@see RerankProvider()} — same credential-reuse
+     * from `config('prism.providers.*')`, its own creator map.
+     *
+     * @param  array<string, mixed>  $providerConfig  Per-call credential/config override (BYO key).
+     *
+     * @throws InvalidArgumentException
+     */
+    public function videoProvider(?string $name = null, array $providerConfig = []): VideoProvider
+    {
+        $name = $this->resolveName($name ?? $this->defaultVideoProvider());
+
+        $config = array_merge($this->getConfig($name), $providerConfig);
+
+        if (isset($this->videoCreators[$name])) {
+            return $this->videoCreators[$name]($this->app, $config);
+        }
+
+        $factory = sprintf('create%sVideoProvider', ucfirst($name));
+
+        if (method_exists($this, $factory)) {
+            return $this->{$factory}($config);
+        }
+
+        throw new InvalidArgumentException("Video provider [{$name}] is not supported.");
+    }
+
+    /**
+     * Register a custom video driver. Mirrors {@see extend()}; the closure receives
+     * `($app, $config)` and must return a {@see VideoProvider}.
+     */
+    public function extendVideo(string $provider, Closure $callback): self
+    {
+        $this->videoCreators[$this->resolveName($provider)] = $callback;
+
+        return $this;
+    }
+
     protected function defaultRerankProvider(): string
     {
         return (string) config('prism-plus.rerank.default_provider', 'voyageai');
+    }
+
+    protected function defaultVideoProvider(): string
+    {
+        return (string) config('prism-plus.video.default_provider', 'fal');
     }
 
     protected function resolveName(string $name): string
@@ -99,6 +154,18 @@ class PrismPlusManager
             apiKey: (string) ($config['api_key'] ?? ''),
             url: (string) ($config['url'] ?? 'https://api.cohere.com/v2'),
             defaultModel: (string) config('prism-plus.rerank.providers.cohere.model', 'rerank-v4.0-pro'),
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function createFalVideoProvider(array $config): FalVideoProvider
+    {
+        return new FalVideoProvider(
+            apiKey: (string) ($config['api_key'] ?? ''),
+            url: (string) ($config['url'] ?? 'https://queue.fal.run'),
+            defaultModel: (string) config('prism-plus.video.providers.fal.model', 'fal-ai/veo3'),
         );
     }
 

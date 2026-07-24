@@ -12,8 +12,11 @@ use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
 use Prism\Prism\Text\PendingRequest as PendingTextRequest;
 use Rushing\PrismPlus\Audio\PendingAudioRequest;
 use Rushing\PrismPlus\Contracts\RerankProvider;
+use Rushing\PrismPlus\Contracts\VideoProvider;
 use Rushing\PrismPlus\ValueObjects\RerankRequest;
 use Rushing\PrismPlus\ValueObjects\RerankResponse;
+use Rushing\PrismPlus\ValueObjects\VideoJob;
+use Rushing\PrismPlus\ValueObjects\VideoRequest;
 
 /**
  * The PrismPlus entry point. Prism stays the invocation engine: every modality
@@ -78,5 +81,28 @@ class PrismPlus
     public function rerankProvider(?string $provider = null): RerankProvider
     {
         return $this->manager->rerankProvider($provider);
+    }
+
+    /**
+     * Submit an async video-generation job — a modality Prism has no slot for, and
+     * fundamentally async (submit → poll/webhook → retrieve). Returns a job handle
+     * immediately; never blocks on completion. Poll/retrieve/cancel via the driver
+     * from {@see VideoProvider()} (the app persists the handle and drives it from a
+     * queued worker).
+     */
+    public function video(VideoRequest $request, ?string $provider = null): VideoJob
+    {
+        return $this->videoProvider($provider)->generate($request);
+    }
+
+    /**
+     * The resolved video driver, for callers that hold it directly to poll/retrieve/
+     * cancel. `$providerConfig` threads a per-call (BYO) credential override.
+     *
+     * @param  array<string, mixed>  $providerConfig
+     */
+    public function videoProvider(?string $provider = null, array $providerConfig = []): VideoProvider
+    {
+        return $this->manager->videoProvider($provider, $providerConfig);
     }
 }

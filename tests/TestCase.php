@@ -28,5 +28,12 @@ class TestCase extends Orchestra
             'api_key' => 'test-cohere-key',
             'url' => 'https://api.cohere.com/v2',
         ]);
+
+        // fal.ai is not a native Prism provider; its async video driver lives in
+        // PrismPlus and reads this same credential block.
+        $app['config']->set('prism.providers.fal', [
+            'api_key' => 'test-fal-key',
+            'url' => 'https://queue.fal.run',
+        ]);
     }
 }

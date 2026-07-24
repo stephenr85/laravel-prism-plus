@@ -37,4 +37,34 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Video (async generation)
+    |--------------------------------------------------------------------------
+    |
+    | Video is a genuinely-new modality Prism has no slot for AND fundamentally
+    | async (submit → poll/webhook → retrieve), so PrismPlus owns it. Credentials
+    | are read from `config('prism.providers.{provider}')` (add e.g. a `fal` block
+    | there); this file only carries the modality-specific bits — the default
+    | provider and each provider's default video model. fal.ai is the recommended
+    | start: one queue API fronts many models (Kling / Luma / Veo / Sora-family).
+    |
+    */
+
+    'video' => [
+
+        'default_provider' => env('PRISM_PLUS_VIDEO_PROVIDER', 'fal'),
+
+        'providers' => [
+
+            'fal' => [
+                // A fal app-id path segment appended to the queue host, e.g.
+                // `fal-ai/veo3`, `fal-ai/kling-video/v2/master/text-to-video`.
+                'model' => env('FAL_VIDEO_MODEL', 'fal-ai/veo3'),
+            ],
+
+        ],
+
+    ],
+
 ];
