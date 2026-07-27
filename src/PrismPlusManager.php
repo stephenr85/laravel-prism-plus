@@ -25,6 +25,7 @@ use Rushing\PrismPlus\Providers\InvocableRerankProvider;
 use Rushing\PrismPlus\Providers\OllamaModelListProvider;
 use Rushing\PrismPlus\Providers\OpenAiShapeModelListProvider;
 use Rushing\PrismPlus\Providers\OpenRouterModelListProvider;
+use Rushing\PrismPlus\Providers\RecordingModelListProvider;
 use Rushing\PrismPlus\Providers\RecordingRerankProvider;
 use Rushing\PrismPlus\Providers\UnsupportedModelListProvider;
 use Rushing\PrismPlus\Providers\VoyageRerankProvider;
@@ -161,7 +162,13 @@ class PrismPlusManager
     {
         return new ModelListInvocable(
             $provider,
-            fn (): ModelListProvider => $this->makeModelListDriver($provider),
+            // Wrap in the recording decorator so a `models` call records/replays through
+            // prism-cassette (mirrors rerank's recordable()); inert unless a cassette is armed.
+            fn (): ModelListProvider => new RecordingModelListProvider(
+                $this->makeModelListDriver($provider),
+                $this->app,
+                $provider,
+            ),
         );
     }
 

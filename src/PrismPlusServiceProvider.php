@@ -7,6 +7,7 @@ namespace Rushing\PrismPlus;
 use Illuminate\Support\ServiceProvider;
 use Prism\Prism\Prism;
 use Rushing\PrismCassette\CassetteManager;
+use Rushing\PrismPlus\Serializers\ModelListingSerializer;
 use Rushing\PrismPlus\Serializers\RerankSerializer;
 
 class PrismPlusServiceProvider extends ServiceProvider
@@ -31,6 +32,7 @@ class PrismPlusServiceProvider extends ServiceProvider
         ], 'prism-plus-config');
 
         $this->registerRerankCassetteSerializer();
+        $this->registerModelListingCassetteSerializer();
     }
 
     /**
@@ -55,5 +57,19 @@ class PrismPlusServiceProvider extends ServiceProvider
         // CassetteProvider decorator — so declare it directly tape-able. This satisfies cassette's
         // scope-disarmed guard without a decoy Prism provider armed just to make record/replay work.
         $manager->armCapability('rerank');
+    }
+
+    /**
+     * Teach prism-cassette to tape the `models` (listing) capability — so the promotion UI and its
+     * tests can run against deterministic recorded fixtures instead of live provider `/models` calls
+     * (ADR-0129 §5). Mirrors {@see registerRerankCassetteSerializer()} exactly: listing is a non-Prism
+     * capability that tapes through {@see CassetteManager::tape()} directly, so it is armed directly.
+     */
+    protected function registerModelListingCassetteSerializer(): void
+    {
+        $manager = $this->app->make(CassetteManager::class);
+
+        $manager->registerSerializer('models', new ModelListingSerializer);
+        $manager->armCapability('models');
     }
 }
