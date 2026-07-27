@@ -9,14 +9,24 @@ use Illuminate\Contracts\Foundation\Application;
 use InvalidArgumentException;
 use Rushing\Popcorn\Contracts\Invocable;
 use Rushing\Popcorn\InvocableRegistry;
+use Rushing\PrismPlus\Contracts\ModelListProvider;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Contracts\VideoProvider;
+use Rushing\PrismPlus\Data\ModelListing;
+use Rushing\PrismPlus\Invocables\ModelListInvocable;
 use Rushing\PrismPlus\Invocables\RerankInvocable;
 use Rushing\PrismPlus\Invocables\VideoInvocable;
+use Rushing\PrismPlus\Providers\AnthropicModelListProvider;
 use Rushing\PrismPlus\Providers\CohereRerankProvider;
+use Rushing\PrismPlus\Providers\ElevenLabsModelListProvider;
 use Rushing\PrismPlus\Providers\FalVideoProvider;
+use Rushing\PrismPlus\Providers\GeminiModelListProvider;
 use Rushing\PrismPlus\Providers\InvocableRerankProvider;
+use Rushing\PrismPlus\Providers\OllamaModelListProvider;
+use Rushing\PrismPlus\Providers\OpenAiShapeModelListProvider;
+use Rushing\PrismPlus\Providers\OpenRouterModelListProvider;
 use Rushing\PrismPlus\Providers\RecordingRerankProvider;
+use Rushing\PrismPlus\Providers\UnsupportedModelListProvider;
 use Rushing\PrismPlus\Providers\VoyageRerankProvider;
 
 /**
@@ -31,6 +41,18 @@ use Rushing\PrismPlus\Providers\VoyageRerankProvider;
  */
 class PrismPlusManager
 {
+    /**
+     * The Prism OTB providers that carry a built-in `models` (listing) driver — the whole native
+     * Prism roster. Providers with no listing endpoint (voyageai, perplexity) are STILL registered,
+     * bound to an {@see UnsupportedModelListProvider} that returns a reasoned "unsupported" value.
+     *
+     * @var list<string>
+     */
+    public const MODEL_PROVIDERS = [
+        'openai', 'anthropic', 'openrouter', 'mistral', 'groq', 'xai',
+        'gemini', 'deepseek', 'z', 'ollama', 'elevenlabs', 'voyageai', 'perplexity',
+    ];
+
     /**
      * capability => registry of provider invocables. Seeded lazily on first {@see capability()}
      * access with the package's built-in providers; a host adds/overrides via {@see register()}.
@@ -112,10 +134,105 @@ class PrismPlusManager
                 ->register($this->rerankInvocable('cohere')),
             'video' => $registry
                 ->register($this->videoInvocable('fal')),
+            'models' => $this->seedModels($registry),
             default => null,
         };
 
         return $registry;
+    }
+
+    /**
+     * Seed the `models` (listing) capability with the whole Prism OTB roster — one invocable per
+     * provider in {@see MODEL_PROVIDERS}, including the two that resolve to an
+     * {@see UnsupportedModelListProvider}. Registering every provider (not just the listable ones)
+     * lets a caller iterate the roster and get a uniform {@see ModelListing}
+     * back for each.
+     */
+    protected function seedModels(InvocableRegistry $registry): InvocableRegistry
+    {
+        foreach (self::MODEL_PROVIDERS as $provider) {
+            $registry->register($this->modelListInvocable($provider));
+        }
+
+        return $registry;
+    }
+
+    protected function modelListInvocable(string $provider): ModelListInvocable
+    {
+        return new ModelListInvocable(
+            $provider,
+            fn (): ModelListProvider => $this->makeModelListDriver($provider),
+        );
+    }
+
+    /**
+     * Build a typed model-listing driver from Prism's own credential block (plus an optional per-call
+     * BYO override). Most providers ride the OpenAI-shape wheel (`Bearer` + `GET {url}/models`); the
+     * warty ones get a dedicated adapter; the two with no listing endpoint get the reasoned
+     * "unsupported" driver.
+     *
+     * @param  array<string, mixed>  $providerConfig
+     */
+    protected function makeModelListDriver(string $provider, array $providerConfig = []): ModelListProvider
+    {
+        $config = array_merge($this->getConfig($provider), $providerConfig);
+        $key = (string) ($config['api_key'] ?? '');
+        $url = (string) ($config['url'] ?? '');
+
+        return match ($provider) {
+            'anthropic' => new AnthropicModelListProvider(
+                apiKey: $key,
+                url: $url !== '' ? $url : 'https://api.anthropic.com/v1',
+                version: (string) ($config['version'] ?? '2023-06-01'),
+            ),
+            'gemini' => new GeminiModelListProvider(
+                apiKey: $key,
+                url: $url !== '' ? $url : 'https://generativelanguage.googleapis.com/v1beta/models',
+            ),
+            'ollama' => new OllamaModelListProvider(
+                url: $url !== '' ? $url : 'http://localhost:11434',
+            ),
+            'elevenlabs' => new ElevenLabsModelListProvider(
+                apiKey: $key,
+                url: $url !== '' ? $url : 'https://api.elevenlabs.io/v1',
+            ),
+            'openrouter' => new OpenRouterModelListProvider(
+                apiKey: $key,
+                url: $url !== '' ? $url : 'https://openrouter.ai/api/v1',
+            ),
+            'voyageai' => new UnsupportedModelListProvider(
+                'voyageai',
+                'VoyageAI exposes no model-listing endpoint (embeddings/rerank only).',
+            ),
+            'perplexity' => new UnsupportedModelListProvider(
+                'perplexity',
+                'Perplexity exposes no model-listing endpoint; its models are documented, not enumerable.',
+            ),
+            // The OpenAI-compatible wheel: Authorization: Bearer + GET {url}/models -> { data: [...] }.
+            'openai', 'groq', 'xai', 'mistral', 'deepseek', 'z' => new OpenAiShapeModelListProvider(
+                provider: $provider,
+                apiKey: $key,
+                url: $url !== '' ? $url : $this->defaultModelListUrl($provider),
+            ),
+            default => throw new InvalidArgumentException("Model-list provider [{$provider}] is not supported."),
+        };
+    }
+
+    /**
+     * Fallback base URLs for the OpenAI-shape providers, matching Prism's own `config/prism.php`
+     * defaults — used only when a host hasn't set `prism.providers.{provider}.url`.
+     */
+    protected function defaultModelListUrl(string $provider): string
+    {
+        return match ($provider) {
+            'openai' => 'https://api.openai.com/v1',
+            'groq' => 'https://api.groq.com/openai/v1',
+            'xai' => 'https://api.x.ai/v1',
+            'mistral' => 'https://api.mistral.ai/v1',
+            'deepseek' => 'https://api.deepseek.com/v1',
+            'z' => 'https://api.z.ai/api/paas/v4',
+            default => '',
+        };
     }
 
     protected function rerankInvocable(string $provider): RerankInvocable

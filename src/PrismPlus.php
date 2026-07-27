@@ -13,6 +13,8 @@ use Prism\Prism\Text\PendingRequest as PendingTextRequest;
 use Rushing\PrismPlus\Audio\PendingAudioRequest;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Contracts\VideoProvider;
+use Rushing\PrismPlus\Data\ModelDescriptor;
+use Rushing\PrismPlus\Data\ModelListing;
 use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\Data\RerankResponse;
 use Rushing\PrismPlus\Data\VideoJob;
@@ -130,5 +132,34 @@ class PrismPlus
     public function videoProvider(?string $provider = null, array $providerConfig = []): VideoProvider
     {
         return $this->manager->videoProvider($provider, $providerConfig);
+    }
+
+    /**
+     * List the models a provider offers — a capability Prism has no slot for (Prism has no
+     * cross-provider client-side listing). Resolve the `models` capability registry, invoke the named
+     * provider over the array boundary, and rehydrate a {@see ModelListing}. Reuses Prism's own
+     * `config('prism.providers.*')` credentials.
+     *
+     * The result is a two-state value: `supported` with normalized {@see ModelDescriptor}s,
+     * or `unsupported` with a reason (VoyageAI, Perplexity) — never a thrown error for the "no
+     * listing endpoint" case, so a caller iterating {@see modelProviders()} handles the whole roster
+     * uniformly.
+     */
+    public function models(string $provider): ModelListing
+    {
+        return ModelListing::from(
+            $this->manager->capability('models')->invoke(strtolower($provider), []),
+        );
+    }
+
+    /**
+     * The Prism OTB providers with a registered model-listing driver — the roster to iterate when
+     * discovering candidates across every configured provider.
+     *
+     * @return list<string>
+     */
+    public function modelProviders(): array
+    {
+        return PrismPlusManager::MODEL_PROVIDERS;
     }
 }
