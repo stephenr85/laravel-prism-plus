@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Rushing\PrismPlus\Providers;
 
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Rushing\PrismPlus\Contracts\VideoProvider;
 use Rushing\PrismPlus\Data\VideoJob;
 use Rushing\PrismPlus\Data\VideoJobStatus;
 use Rushing\PrismPlus\Data\VideoRequest;
 use Rushing\PrismPlus\Data\VideoResult;
+use Rushing\PrismPlus\Fal\FalQueue;
 
 /**
  * fal.ai queue video driver — the recommended aggregator to start with, because one
@@ -37,11 +36,15 @@ use Rushing\PrismPlus\Data\VideoResult;
  */
 final class FalVideoProvider implements VideoProvider
 {
+    private readonly FalQueue $queue;
+
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $url = 'https://queue.fal.run',
+        string $apiKey,
+        string $url = 'https://queue.fal.run',
         private readonly string $defaultModel = 'fal-ai/veo3',
-    ) {}
+    ) {
+        $this->queue = new FalQueue($apiKey, $url);
+    }
 
     public function generate(VideoRequest $request): VideoJob
     {
@@ -56,10 +59,7 @@ final class FalVideoProvider implements VideoProvider
 
         $query = $request->webhookUrl !== null ? ['fal_webhook' => $request->webhookUrl] : [];
 
-        $response = $this->client()
-            ->withQueryParameters($query)
-            ->post($this->submitUrl($model), $body)
-            ->throw();
+        $response = $this->queue->submit($model, $body, $query)->throw();
 
         $data = (array) $response->json();
         $jobId = (string) ($data['request_id'] ?? '');
@@ -69,9 +69,9 @@ final class FalVideoProvider implements VideoProvider
             jobId: $jobId,
             status: $this->mapStatus($data['status'] ?? 'IN_QUEUE'),
             model: $model,
-            statusUrl: $data['status_url'] ?? $this->requestUrl($model, $jobId).'/status',
-            responseUrl: $data['response_url'] ?? $this->requestUrl($model, $jobId),
-            cancelUrl: $data['cancel_url'] ?? $this->requestUrl($model, $jobId).'/cancel',
+            statusUrl: $data['status_url'] ?? $this->queue->requestUrl($model, $jobId).'/status',
+            responseUrl: $data['response_url'] ?? $this->queue->requestUrl($model, $jobId),
+            cancelUrl: $data['cancel_url'] ?? $this->queue->requestUrl($model, $jobId).'/cancel',
             queuePosition: isset($data['queue_position']) ? (int) $data['queue_position'] : null,
             raw: $data,
         );
@@ -79,9 +79,9 @@ final class FalVideoProvider implements VideoProvider
 
     public function status(VideoJob $job): VideoJob
     {
-        $statusUrl = $job->statusUrl ?? $this->requestUrl($job->model ?? $this->defaultModel, $job->jobId).'/status';
+        $statusUrl = $job->statusUrl ?? $this->queue->requestUrl($job->model ?? $this->defaultModel, $job->jobId).'/status';
 
-        $response = $this->client()->get($statusUrl, ['logs' => 1])->throw();
+        $response = $this->queue->get($statusUrl, ['logs' => 1])->throw();
         $data = (array) $response->json();
 
         return $job->withStatus(
@@ -92,9 +92,9 @@ final class FalVideoProvider implements VideoProvider
 
     public function retrieve(VideoJob $job): VideoResult
     {
-        $responseUrl = $job->responseUrl ?? $this->requestUrl($job->model ?? $this->defaultModel, $job->jobId);
+        $responseUrl = $job->responseUrl ?? $this->queue->requestUrl($job->model ?? $this->defaultModel, $job->jobId);
 
-        $response = $this->client()->get($responseUrl);
+        $response = $this->queue->get($responseUrl);
 
         if ($response->failed()) {
             throw new RuntimeException("fal.ai video job [{$job->jobId}] failed to retrieve: HTTP {$response->status()}.");
@@ -123,26 +123,11 @@ final class FalVideoProvider implements VideoProvider
 
     public function cancel(VideoJob $job): void
     {
-        $cancelUrl = $job->cancelUrl ?? $this->requestUrl($job->model ?? $this->defaultModel, $job->jobId).'/cancel';
+        $cancelUrl = $job->cancelUrl ?? $this->queue->requestUrl($job->model ?? $this->defaultModel, $job->jobId).'/cancel';
 
         // Best-effort: 202 (requested), 400 (already completed), 404 (unknown) are all
         // acceptable outcomes — never throw on a cancel.
-        $this->client()->put($cancelUrl);
-    }
-
-    private function client(): PendingRequest
-    {
-        return Http::withHeaders(['Authorization' => 'Key '.$this->apiKey])->asJson();
-    }
-
-    private function submitUrl(string $model): string
-    {
-        return rtrim($this->url, '/').'/'.ltrim($model, '/');
-    }
-
-    private function requestUrl(string $model, string $jobId): string
-    {
-        return $this->submitUrl($model).'/requests/'.$jobId;
+        $this->queue->put($cancelUrl);
     }
 
     private function mapStatus(string $vendorStatus): VideoJobStatus
