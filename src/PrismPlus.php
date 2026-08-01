@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus;
 
 use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Tests\Feature\Conformance;
 
 use Illuminate\Support\Facades\Http;
@@ -17,7 +15,7 @@ use Rushing\PrismPlus\Testing\RerankProviderConformanceTest;
  * Set `CONFORMANCE_LIVE=1` and `VOYAGEAI_API_KEY=…` to point the record leg at the real endpoint (the
  * keyed CI lane), validating the vendor's real response contract instead of a faked one.
  */
-final class VoyageRerankConformanceTest extends RerankProviderConformanceTest
+class VoyageRerankConformanceTest extends RerankProviderConformanceTest
 {
     protected function providerName(): string
     {

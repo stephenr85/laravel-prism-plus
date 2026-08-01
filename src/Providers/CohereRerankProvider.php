@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
@@ -19,12 +17,12 @@ use Rushing\PrismPlus\Data\RerankResult;
  * echoed (map `index` back yourself), and `rerank-v3.5` is deprecated in favour
  * of `rerank-v4.0-pro` / `-fast` (whose scores are not comparable to v3.5).
  */
-final class CohereRerankProvider implements RerankProvider
+class CohereRerankProvider implements RerankProvider
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $url = 'https://api.cohere.com/v2',
-        private readonly string $defaultModel = 'rerank-v4.0-pro',
+        private string $apiKey,
+        private string $url = 'https://api.cohere.com/v2',
+        private string $defaultModel = 'rerank-v4.0-pro',
     ) {}
 
     public function rerank(RerankRequest $request): RerankResponse

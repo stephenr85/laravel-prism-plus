@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Contracts\Foundation\Application;
@@ -22,12 +20,12 @@ use Rushing\PrismPlus\PrismPlusManager;
  * Mirrors {@see RecordingRerankProvider} verbatim. {@see inner()} exposes the wrapped vendor driver
  * for introspection.
  */
-final class RecordingModelListProvider implements ModelListProvider
+class RecordingModelListProvider implements ModelListProvider
 {
     public function __construct(
-        private readonly ModelListProvider $inner,
-        private readonly Application $app,
-        private readonly string $provider,
+        private ModelListProvider $inner,
+        private Application $app,
+        private string $provider,
     ) {}
 
     /** The wrapped vendor driver — recording is a transparent decorator. */

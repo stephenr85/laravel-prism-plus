@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Serializers;
 
 use Prism\Prism\ValueObjects\Usage;
@@ -30,7 +28,7 @@ use Rushing\PrismPlus\Data\RerankResult;
  * bills `total_tokens`; Cohere `search_units`), so {@see Usage()} is a best-effort synthesis and
  * {@see rawUsage()} carries the vendor array verbatim onto {@see CassetteResolved::$rawUsage}.
  */
-final class RerankSerializer implements CassetteSerializer, RefinesEventMetering
+class RerankSerializer implements CassetteSerializer, RefinesEventMetering
 {
     public function key(object $request): string
     {

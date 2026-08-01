@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use RuntimeException;
@@ -18,15 +16,15 @@ use Rushing\PrismPlus\Fal\FalQueue;
  * (isolated-vocal stem models expose it as `vocals`/`stems.vocals`; single-output models as the
  * generic `audio`/`url`).
  */
-final class FalAudioTransformProvider implements AudioTransformProvider
+class FalAudioTransformProvider implements AudioTransformProvider
 {
-    private readonly FalQueue $queue;
+    private FalQueue $queue;
 
     public function __construct(
         string $apiKey,
         string $url = 'https://queue.fal.run',
-        private readonly int $pollSeconds = 5,
-        private readonly int $maxPolls = 60,
+        private int $pollSeconds = 5,
+        private int $maxPolls = 60,
     ) {
         $this->queue = new FalQueue($apiKey, $url);
     }

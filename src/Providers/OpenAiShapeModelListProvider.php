@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
@@ -15,12 +13,12 @@ use Rushing\PrismPlus\Data\ModelListing;
  * DeepSeek, and Z, so one adapter serves them all — the provider name is injected, and context window
  * is read from whichever of the near-synonym keys the provider happens to use.
  */
-final class OpenAiShapeModelListProvider implements ModelListProvider
+class OpenAiShapeModelListProvider implements ModelListProvider
 {
     public function __construct(
-        private readonly string $provider,
-        private readonly string $apiKey,
-        private readonly string $url,
+        private string $provider,
+        private string $apiKey,
+        private string $url,
     ) {}
 
     public function listModels(): ModelListing

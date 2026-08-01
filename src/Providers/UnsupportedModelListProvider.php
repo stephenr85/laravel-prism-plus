@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Rushing\PrismPlus\Contracts\ModelListProvider;
@@ -14,11 +12,11 @@ use Rushing\PrismPlus\Data\ModelListing;
  * with a reason, so a caller iterating the whole roster gets a uniform value and falls back to its
  * static floor for these providers. Discovery degrading to a curated list is a value, not an error.
  */
-final class UnsupportedModelListProvider implements ModelListProvider
+class UnsupportedModelListProvider implements ModelListProvider
 {
     public function __construct(
-        private readonly string $provider,
-        private readonly string $reason,
+        private string $provider,
+        private string $reason,
     ) {}
 
     public function listModels(): ModelListing

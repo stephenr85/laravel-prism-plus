@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
 use Prism\Prism\Images\PendingRequest as PendingImageRequest;
 use Prism\Prism\Moderation\PendingRequest as PendingModerationRequest;

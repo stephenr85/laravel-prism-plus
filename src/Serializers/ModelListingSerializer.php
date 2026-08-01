@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Serializers;
 
 use Prism\Prism\ValueObjects\Usage;
@@ -25,7 +23,7 @@ use Rushing\PrismPlus\Data\ModelListing;
  * KEY is the provider alone: a listing call carries no request payload, so a Groq recording can
  * never replay for an Anthropic call, and that is the whole identity.
  */
-final class ModelListingSerializer implements CassetteSerializer
+class ModelListingSerializer implements CassetteSerializer
 {
     public function key(object $request): string
     {

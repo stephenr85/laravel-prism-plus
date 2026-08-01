@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Contracts\Foundation\Application;
@@ -23,12 +21,12 @@ use Rushing\PrismPlus\PrismPlusManager;
  * directly via rerankProvider()->rerank() are taped too — no bypass. {@see inner()} exposes the
  * wrapped vendor driver for introspection.
  */
-final class RecordingRerankProvider implements RerankProvider
+class RecordingRerankProvider implements RerankProvider
 {
     public function __construct(
-        private readonly RerankProvider $inner,
-        private readonly Application $app,
-        private readonly string $provider,
+        private RerankProvider $inner,
+        private Application $app,
+        private string $provider,
     ) {}
 
     /**

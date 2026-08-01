@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
@@ -15,11 +13,11 @@ use Rushing\PrismPlus\Data\ModelListing;
  * `architecture.input_modalities`, from which the normalized `accepts` is derived (`image` → 'image',
  * `file` → 'document'). Pricing rides along untouched in `raw` for a curation gate to consume.
  */
-final class OpenRouterModelListProvider implements ModelListProvider
+class OpenRouterModelListProvider implements ModelListProvider
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $url = 'https://openrouter.ai/api/v1',
+        private string $apiKey,
+        private string $url = 'https://openrouter.ai/api/v1',
     ) {}
 
     public function listModels(): ModelListing

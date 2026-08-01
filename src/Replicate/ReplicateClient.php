@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Replicate;
 
 use Illuminate\Http\Client\PendingRequest;
@@ -18,13 +16,13 @@ use RuntimeException;
  * poll `GET urls.get` until `status ∈ succeeded|failed|canceled`; `output` is the result (a URI
  * string, or an array of them). A 422 at create is a synchronous input-schema rejection.
  */
-final class ReplicateClient
+class ReplicateClient
 {
     public function __construct(
-        private readonly string $apiToken,
-        private readonly string $baseUrl = 'https://api.replicate.com/v1',
-        private readonly int $pollSeconds = 3,
-        private readonly int $maxPolls = 200,
+        private string $apiToken,
+        private string $baseUrl = 'https://api.replicate.com/v1',
+        private int $pollSeconds = 3,
+        private int $maxPolls = 200,
     ) {}
 
     public static function fromConfig(): self

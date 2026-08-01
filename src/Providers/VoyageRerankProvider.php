@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
@@ -18,12 +16,12 @@ use Rushing\PrismPlus\Data\RerankResult;
  * model family is `rerank-2.5`. Documents are echoed only when
  * `return_documents: true`.
  */
-final class VoyageRerankProvider implements RerankProvider
+class VoyageRerankProvider implements RerankProvider
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $url = 'https://api.voyageai.com/v1',
-        private readonly string $defaultModel = 'rerank-2.5',
+        private string $apiKey,
+        private string $url = 'https://api.voyageai.com/v1',
+        private string $defaultModel = 'rerank-2.5',
     ) {}
 
     public function rerank(RerankRequest $request): RerankResponse

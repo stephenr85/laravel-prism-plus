@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Rushing\Popcorn\Contracts\Invocable;
@@ -17,10 +15,10 @@ use Rushing\PrismPlus\Invocables\RerankInvocable;
  * remote binding). It re-crosses the array boundary so a caller holding a typed driver still resolves
  * through the same registry entry `PrismPlus::rerank()` uses.
  */
-final class InvocableRerankProvider implements RerankProvider
+class InvocableRerankProvider implements RerankProvider
 {
     public function __construct(
-        private readonly Invocable $invocable,
+        private Invocable $invocable,
     ) {}
 
     public function rerank(RerankRequest $request): RerankResponse

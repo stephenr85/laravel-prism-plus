@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
@@ -22,11 +20,11 @@ use Rushing\PrismPlus\Data\ModelListing;
  * `generateContent` (text/multimodal) OR `embedContent` (embeddings) is kept — both are curatable
  * across the gate's modalities. A row that omits the field entirely is kept (fail-open).
  */
-final class GeminiModelListProvider implements ModelListProvider
+class GeminiModelListProvider implements ModelListProvider
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $url = 'https://generativelanguage.googleapis.com/v1beta/models',
+        private string $apiKey,
+        private string $url = 'https://generativelanguage.googleapis.com/v1beta/models',
     ) {}
 
     public function listModels(): ModelListing

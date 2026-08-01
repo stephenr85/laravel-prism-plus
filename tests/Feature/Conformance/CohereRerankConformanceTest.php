@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Tests\Feature\Conformance;
 
 use Illuminate\Support\Facades\Http;
@@ -12,7 +10,7 @@ use Rushing\PrismPlus\Testing\RerankProviderConformanceTest;
  * arms only the token-free `Http::fake()` record leg. Set `CONFORMANCE_LIVE=1` and `COHERE_API_KEY=…`
  * to point the record leg at the real endpoint (the keyed CI lane).
  */
-final class CohereRerankConformanceTest extends RerankProviderConformanceTest
+class CohereRerankConformanceTest extends RerankProviderConformanceTest
 {
     protected function providerName(): string
     {

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Http\Client\PendingRequest;
@@ -18,11 +16,11 @@ use Rushing\PrismPlus\Contracts\MusicComposeProvider;
  * never inventing or renaming a vendor field. Bytes-out (not a fal-queue URL), so the host
  * persists the produced audio itself. Mirrors {@see ElevenLabsVoiceProvider} exactly.
  */
-final class ElevenLabsMusicProvider implements MusicComposeProvider
+class ElevenLabsMusicProvider implements MusicComposeProvider
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $baseUrl = 'https://api.elevenlabs.io/v1/',
+        private string $apiKey,
+        private string $baseUrl = 'https://api.elevenlabs.io/v1/',
     ) {}
 
     public function compose(array $request, string $outputFormat = 'mp3_44100_128'): string

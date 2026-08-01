@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Data;
 
 use Prism\Prism\ValueObjects\Media\Image;

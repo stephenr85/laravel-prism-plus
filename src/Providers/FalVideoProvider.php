@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use RuntimeException;
@@ -34,14 +32,14 @@ use Rushing\PrismPlus\Fal\FalQueue;
  * `image`); this driver maps the common normalized fields and merges
  * {@see VideoRequest::$providerOptions} verbatim for anything a given model needs on top.
  */
-final class FalVideoProvider implements VideoProvider
+class FalVideoProvider implements VideoProvider
 {
-    private readonly FalQueue $queue;
+    private FalQueue $queue;
 
     public function __construct(
         string $apiKey,
         string $url = 'https://queue.fal.run',
-        private readonly string $defaultModel = 'fal-ai/veo3',
+        private string $defaultModel = 'fal-ai/veo3',
     ) {
         $this->queue = new FalQueue($apiKey, $url);
     }

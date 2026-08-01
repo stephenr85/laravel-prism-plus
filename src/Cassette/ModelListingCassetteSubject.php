@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Cassette;
 
 /**
@@ -13,13 +11,13 @@ namespace Rushing\PrismPlus\Cassette;
  * filters later without breaking the serializer key, mirroring how {@see RerankCassetteSubject}
  * bundles provider + request.
  */
-final class ModelListingCassetteSubject
+class ModelListingCassetteSubject
 {
     /**
      * @param  array<string, mixed>  $request  reserved for future listing filters; empty for now
      */
     public function __construct(
-        public readonly string $provider,
-        public readonly array $request = [],
+        public string $provider,
+        public array $request = [],
     ) {}
 }

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Prism\Prism\Audio\SpeechToTextRequest;
 use Prism\Prism\Audio\TextToSpeechRequest;
 use Prism\Prism\Facades\Prism;

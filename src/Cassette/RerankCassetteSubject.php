@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Cassette;
 
 use Rushing\PrismPlus\Data\RerankRequest;
@@ -15,10 +13,10 @@ use Rushing\PrismPlus\Data\RerankRequest;
  * about to run) bundles the resolved provider name with the request here, so the serializer keys and
  * meters on the full (provider, request) identity without polluting the public request VO.
  */
-final class RerankCassetteSubject
+class RerankCassetteSubject
 {
     public function __construct(
-        public readonly string $provider,
-        public readonly RerankRequest $request,
+        public string $provider,
+        public RerankRequest $request,
     ) {}
 }

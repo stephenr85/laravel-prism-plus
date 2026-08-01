@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Http\Client\PendingRequest;
@@ -18,11 +16,11 @@ use Rushing\PrismPlus\Contracts\VoiceCloneProvider;
  * Bytes-out (not a URL like the fal queue), so the host persists the produced audio itself. The
  * `voice_settings`/`model_id` knobs ride through to tune timbre-fidelity vs expressiveness.
  */
-final class ElevenLabsVoiceProvider implements VoiceCloneProvider
+class ElevenLabsVoiceProvider implements VoiceCloneProvider
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $baseUrl = 'https://api.elevenlabs.io/v1/',
+        private string $apiKey,
+        private string $baseUrl = 'https://api.elevenlabs.io/v1/',
     ) {}
 
     public function cloneVoice(string $name, array $audioPaths): string

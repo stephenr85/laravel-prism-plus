@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Contracts;
 
 use Rushing\PrismPlus\Data\ModelListing;

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
@@ -13,11 +11,11 @@ use Rushing\PrismPlus\Data\ModelListing;
  * ElevenLabs `GET {url}/models` — audio (TTS/STT) models. Authenticates with `xi-api-key` and, unlike
  * the OpenAI shape, returns a TOP-LEVEL array (no `data` envelope) of `{ model_id, name, languages }`.
  */
-final class ElevenLabsModelListProvider implements ModelListProvider
+class ElevenLabsModelListProvider implements ModelListProvider
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $url = 'https://api.elevenlabs.io/v1',
+        private string $apiKey,
+        private string $url = 'https://api.elevenlabs.io/v1',
     ) {}
 
     public function listModels(): ModelListing

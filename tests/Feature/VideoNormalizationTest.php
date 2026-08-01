@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Illuminate\Support\Facades\Http;
 use Prism\Prism\ValueObjects\Media\Image;
 use Rushing\PrismPlus\Contracts\VideoProvider;

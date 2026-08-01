@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use RuntimeException;
@@ -23,14 +21,14 @@ use Rushing\PrismPlus\Fal\FalQueue;
  * extraction. A 422 at submit is a synchronous schema rejection (no generation billed) whose
  * body names the offending fields.
  */
-final class FalMusicProvider implements MusicProvider
+class FalMusicProvider implements MusicProvider
 {
-    private readonly FalQueue $queue;
+    private FalQueue $queue;
 
     public function __construct(
         string $apiKey,
         string $url = 'https://queue.fal.run',
-        private readonly string $defaultModel = 'fal-ai/ace-step',
+        private string $defaultModel = 'fal-ai/ace-step',
     ) {
         $this->queue = new FalQueue($apiKey, $url);
     }

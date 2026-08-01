@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Rushing\Popcorn\Invocables\LocalInvocable;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Data\RerankRequest;

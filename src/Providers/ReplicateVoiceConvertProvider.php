@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Rushing\PrismPlus\Contracts\AudioTransformProvider;
@@ -19,14 +17,14 @@ use Rushing\PrismPlus\Replicate\ReplicateClient;
  * Replicate model version (empty → the FreeVC default) and `$input` is the model's opaque body
  * (e.g. FreeVC's `source_audio` + `reference_audio`). Async under the hood via {@see ReplicateClient}.
  */
-final class ReplicateVoiceConvertProvider implements AudioTransformProvider
+class ReplicateVoiceConvertProvider implements AudioTransformProvider
 {
     /** FreeVC (jagilley/free-vc) — zero-shot voice conversion; source_audio + reference_audio → converted URL. */
     public const FREE_VC_VERSION = 'e4f2ff8a1d3779a2411e119dfad7d451d5f3314a8cd7003a88f88ce4c3b18d95';
 
     public function __construct(
-        private readonly ReplicateClient $client,
-        private readonly string $defaultVersion = self::FREE_VC_VERSION,
+        private ReplicateClient $client,
+        private string $defaultVersion = self::FREE_VC_VERSION,
     ) {}
 
     /**

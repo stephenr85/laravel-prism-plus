@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
@@ -14,10 +12,10 @@ use Rushing\PrismPlus\Data\ModelListing;
  * different shape and a different meaning from the hosted providers: this is "what's pulled here",
  * not "what the vendor offers". Returns `{ models: [ { name, model, size, details } ] }`.
  */
-final class OllamaModelListProvider implements ModelListProvider
+class OllamaModelListProvider implements ModelListProvider
 {
     public function __construct(
-        private readonly string $url = 'http://localhost:11434',
+        private string $url = 'http://localhost:11434',
     ) {}
 
     public function listModels(): ModelListing

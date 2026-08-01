@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Providers;
 
 use Illuminate\Support\Facades\Http;
@@ -15,12 +13,12 @@ use Rushing\PrismPlus\Data\ModelListing;
  * `max_tokens`, and a `capabilities` tree. `image_input.supported` maps to the normalized
  * `accepts: ['image']`.
  */
-final class AnthropicModelListProvider implements ModelListProvider
+class AnthropicModelListProvider implements ModelListProvider
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $url = 'https://api.anthropic.com/v1',
-        private readonly string $version = '2023-06-01',
+        private string $apiKey,
+        private string $url = 'https://api.anthropic.com/v1',
+        private string $version = '2023-06-01',
     ) {}
 
     public function listModels(): ModelListing

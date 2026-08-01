@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Rushing\PrismPlus\Fal;
 
 use Illuminate\Http\Client\PendingRequest;
@@ -22,11 +20,11 @@ use Illuminate\Support\Facades\Http;
  * `GET {response_url}`; cancel `PUT {cancel_url}` (best-effort). A 422 at submit is a
  * synchronous schema rejection (no generation billed).
  */
-final class FalQueue
+class FalQueue
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly string $url = 'https://queue.fal.run',
+        private string $apiKey,
+        private string $url = 'https://queue.fal.run',
     ) {}
 
     /** The authorized fal HTTP client — `Authorization: Key {key}` (fal's scheme, not Bearer). */
