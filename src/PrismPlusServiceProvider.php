@@ -2,9 +2,11 @@
 
 namespace Rushing\PrismPlus;
 
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
 use Prism\Prism\Prism;
 use Rushing\PrismCassette\CassetteManager;
+use Rushing\PrismPlus\Facades\PrismPlus as PrismPlusFacade;
 use Rushing\PrismPlus\Serializers\ModelListingSerializer;
 use Rushing\PrismPlus\Serializers\RerankSerializer;
 
@@ -25,6 +27,10 @@ class PrismPlusServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (class_exists(AliasLoader::class)) {
+            AliasLoader::getInstance()->alias('PrismPlus', PrismPlusFacade::class);
+        }
+
         $this->publishes([
             __DIR__.'/../config/prism-plus.php' => config_path('prism-plus.php'),
         ], 'prism-plus-config');
