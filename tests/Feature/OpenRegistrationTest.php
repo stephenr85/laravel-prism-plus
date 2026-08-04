@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Cache;
 use Rushing\Popcorn\Binding;
-use Rushing\Popcorn\Invocables\CachedInvocable;
+use Rushing\Popcorn\Laravel\Invocables\CachedInvocable;
 use Rushing\Popcorn\Invocables\LocalInvocable;
 use Rushing\Popcorn\Invocables\RemoteInvocable;
 use Rushing\PrismPlus\Data\RerankRequest;
