@@ -4,3 +4,4 @@ composer.lock
 .phpunit.cache
 .DS_Store
 CLAUDE.md
+composer.local.json
