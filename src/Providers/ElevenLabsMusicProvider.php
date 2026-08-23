@@ -5,6 +5,7 @@ namespace Rushing\PrismPlus\Providers;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Rushing\PrismPlus\Contracts\MusicComposeProvider;
+use Rushing\PrismPlus\Data\MusicComposeResult;
 
 /**
  * The ElevenLabs Music driver — the synchronous, structured-conditioning counterpart to the
@@ -23,16 +24,20 @@ class ElevenLabsMusicProvider implements MusicComposeProvider
         private string $baseUrl = 'https://api.elevenlabs.io/v1/',
     ) {}
 
-    public function compose(array $request, string $outputFormat = 'mp3_44100_128'): string
+    public function compose(array $request, string $outputFormat = 'mp3_44100_128'): MusicComposeResult
     {
-        return $this->client()
+        $response = $this->client()
             ->withBody(
                 (string) json_encode($request, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 'application/json',
             )
             ->post('music?output_format='.$outputFormat)
-            ->throw()
-            ->body();
+            ->throw();
+
+        // The headers ride back with the bytes because the take's `song-id` is a header and the
+        // body is raw audio — see MusicComposeResult. Still pure transport: nothing is read or
+        // renamed here, the host picks the header it means.
+        return new MusicComposeResult($response->body(), $response->headers());
     }
 
     public static function fromConfig(): self
