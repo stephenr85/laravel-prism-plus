@@ -1,6 +1,7 @@
 <?php
 
 use Rushing\Popcorn\Invocables\LocalInvocable;
+use Rushing\Popcorn\Registries\Exceptions\RegistryMiss;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\Data\RerankResponse;
@@ -80,7 +81,7 @@ it('fails loud through Data hydration when a provider returns a malformed result
 
 it('fails loud on an unknown provider rather than a silent empty result', function () {
     app(PrismPlus::class)->rerank(new RerankRequest(query: 'q', documents: ['a']), provider: 'nope');
-})->throws(InvalidArgumentException::class);
+})->throws(RegistryMiss::class);
 
 it('the deprecated rerankProvider() shim resolves the built-in driver through the registry', function () {
     // Migration safety: the create*/method_exists dispatch is deleted; the shim must still hand back

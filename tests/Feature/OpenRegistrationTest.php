@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Cache;
 use Rushing\Popcorn\Binding;
-use Rushing\Popcorn\Laravel\Invocables\CachedInvocable;
 use Rushing\Popcorn\Invocables\LocalInvocable;
 use Rushing\Popcorn\Invocables\RemoteInvocable;
+use Rushing\Popcorn\Laravel\Invocables\CachedInvocable;
+use Rushing\Popcorn\Registries\Exceptions\RegistryMiss;
 use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\PrismPlus;
 use Rushing\PrismPlus\PrismPlusManager;
@@ -89,7 +90,7 @@ it('forget() tears a tenant-scoped registration down with no cross-tenant bleed'
     expect($manager->capability('rerank')->has('tenant-x'))->toBeFalse();
 
     app(PrismPlus::class)->rerank(new RerankRequest(query: 'q', documents: ['a']), provider: 'tenant-x');
-})->throws(InvalidArgumentException::class);
+})->throws(RegistryMiss::class);
 
 it('a CachedInvocable memoizes identical inputs transparently, regardless of binding', function () {
     $calls = 0;

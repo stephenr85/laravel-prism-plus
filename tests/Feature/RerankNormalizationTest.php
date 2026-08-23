@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Http;
+use Rushing\Popcorn\Registries\Exceptions\RegistryMiss;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Data\RerankRequest;
 use Rushing\PrismPlus\PrismPlus;
@@ -32,7 +33,7 @@ it('resolves cohere by name', function () {
 
 it('throws on an unknown rerank provider', function () {
     app(PrismPlus::class)->rerankProvider('nope');
-})->throws(InvalidArgumentException::class);
+})->throws(RegistryMiss::class);
 
 it('normalizes Voyage: top_k param, `data` array, re-sorted desc', function () use ($documents) {
     Http::fake([

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Http;
 use Prism\Prism\ValueObjects\Media\Image;
+use Rushing\Popcorn\Registries\Exceptions\RegistryMiss;
 use Rushing\PrismPlus\Contracts\VideoProvider;
 use Rushing\PrismPlus\Data\VideoJob;
 use Rushing\PrismPlus\Data\VideoJobStatus;
@@ -17,7 +18,7 @@ it('resolves the default video provider (fal) from Prism credentials', function 
 
 it('throws on an unknown video provider', function () {
     app(PrismPlus::class)->videoProvider('nope');
-})->throws(InvalidArgumentException::class);
+})->throws(RegistryMiss::class);
 
 it('submits non-blocking: maps the body, opts into the webhook, parses the handle', function () {
     Http::fake([

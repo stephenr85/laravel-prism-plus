@@ -7,6 +7,7 @@ use Illuminate\Contracts\Foundation\Application;
 use InvalidArgumentException;
 use Rushing\Popcorn\Contracts\Invocable;
 use Rushing\Popcorn\InvocableRegistry;
+use Rushing\Popcorn\Registries\Exceptions\RegistryMiss;
 use Rushing\PrismPlus\Contracts\ModelListProvider;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Contracts\VideoProvider;
@@ -321,7 +322,7 @@ class PrismPlusManager
      *
      * @param  array<string, mixed>  $providerConfig  Per-call BYO credential override.
      *
-     * @throws InvalidArgumentException
+     * @throws RegistryMiss no provider is registered under that name
      */
     public function rerankProvider(?string $name = null, array $providerConfig = []): RerankProvider
     {
@@ -368,7 +369,8 @@ class PrismPlusManager
      *
      * @param  array<string, mixed>  $providerConfig  Per-call BYO credential override.
      *
-     * @throws InvalidArgumentException
+     * @throws RegistryMiss no provider is registered under that name
+     * @throws InvalidArgumentException the registered provider exposes no typed driver
      */
     public function videoProvider(?string $name = null, array $providerConfig = []): VideoProvider
     {
