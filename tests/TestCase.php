@@ -3,6 +3,7 @@
 namespace Rushing\PrismPlus\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
+use Rushing\Popcorn\Laravel\PopcornServiceProvider;
 use Rushing\PrismCassette\CassetteServiceProvider;
 use Rushing\PrismPlus\PrismPlusServiceProvider;
 use Spatie\LaravelData\LaravelDataServiceProvider;
@@ -13,6 +14,11 @@ class TestCase extends Orchestra
     {
         return [
             LaravelDataServiceProvider::class,
+            // Testbench does not auto-discover, so requiring rushing/laravel-popcorn is NOT enough:
+            // without this the container hands out a FRESH RegistryIndex per make(), every describe()
+            // lands on a throwaway and the suite stays green over an empty index (registry-kernel
+            // ticket 27 D3). RegistryIndexSharingTest is the tripwire for exactly that.
+            PopcornServiceProvider::class,
             // prism-cassette is a hard dependency now; its provider binds the CassetteManager singleton
             // that PrismPlus's rerank serializer registers onto and RecordingRerankProvider tapes through.
             CassetteServiceProvider::class,

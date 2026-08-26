@@ -7,7 +7,16 @@ use Illuminate\Contracts\Foundation\Application;
 use InvalidArgumentException;
 use Rushing\Popcorn\Contracts\Invocable;
 use Rushing\Popcorn\InvocableRegistry;
+use Rushing\Popcorn\Registries\Authorizer;
+use Rushing\Popcorn\Registries\BasicRegistry;
 use Rushing\Popcorn\Registries\Exceptions\RegistryMiss;
+use Rushing\Popcorn\Registries\Gated;
+use Rushing\Popcorn\Registries\IsRegistry;
+use Rushing\Popcorn\Registries\OnDuplicate;
+use Rushing\Popcorn\Registries\Optionality;
+use Rushing\Popcorn\Registries\Registry;
+use Rushing\Popcorn\Registries\RegistryArity;
+use Rushing\Popcorn\Registries\RegistryKey;
 use Rushing\PrismPlus\Contracts\ModelListProvider;
 use Rushing\PrismPlus\Contracts\RerankProvider;
 use Rushing\PrismPlus\Contracts\VideoProvider;
@@ -38,9 +47,46 @@ use Rushing\PrismPlus\Providers\VoyageRerankProvider;
  *
  * Provider credentials are read from the SAME `config('prism.providers.*')` blocks Prism uses, so a
  * key configured once for Prism embeddings is reused verbatim by PrismPlus rerank/video.
+ *
+ * ## The OUTER tier is the registry this class declares
+ *
+ * Conformed onto the popcorn kernel by registry-kernel ticket 38. The capability map is now a
+ * {@see BasicRegistry} held as a field (never a base class — composition is the sanctioned shape,
+ * ticket 01 D1), so a capability name is a key under `prism-plus.capabilities` and the entry at it is
+ * the capability's own {@see InvocableRegistry}. The INNER tier is popcorn's own registry and carries
+ * its own declaration (`popcorn.invocables`); it is a rung, not a described root, so only this outer
+ * map reaches the {@see \Rushing\Popcorn\Registries\RegistryIndex} (ticket 33 D8).
+ *
+ * `register('rerank', $invocable)` still writes a PROVIDER one tier down — the parameter is widened
+ * contravariantly and the entry type decides which tier the write lands on, so every historical caller
+ * is untouched while `register($capability, $registry)` speaks the contract.
+ *
+ * @implements Registry<InvocableRegistry>
  */
-class PrismPlusManager
+#[IsRegistry(
+    root: 'prism-plus.capabilities',
+    of: 'PrismPlus capabilities — each one a registry of the provider invocables that answer it',
+    arity: RegistryArity::PickOne,
+    entryType: InvocableRegistry::class,
+    onDuplicate: OnDuplicate::Supersede,
+    optionality: Optionality::Optional,
+    note: 'The entry at a capability key is itself a registry (ticket 26 D5): reading `rerank` gives '
+        .'you the registry of rerank providers, not a provider. Registering the first provider under '
+        .'an unknown capability name IS adding a capability, which is why a miss on this outer map is '
+        .'created rather than thrown for by `capability()`.',
+)]
+class PrismPlusManager implements Gated, Registry
 {
+    /**
+     * The capabilities this package ships providers for. Seeded in the constructor so the declared
+     * root is populated the moment the singleton exists — `describe()` forces construction anyway, and
+     * seeding reads no config (every driver is built inside a closure), so there is nothing here to
+     * snapshot ahead of a later registrant.
+     *
+     * @var list<string>
+     */
+    public const BUILT_IN_CAPABILITIES = ['rerank', 'video', 'models'];
+
     /**
      * The Prism OTB providers that carry a built-in `models` (listing) driver — the whole native
      * Prism roster. Providers with no listing endpoint (voyageai, perplexity) are STILL registered,
@@ -54,26 +100,42 @@ class PrismPlusManager
     ];
 
     /**
-     * capability => registry of provider invocables. Seeded lazily on first {@see capability()}
-     * access with the package's built-in providers; a host adds/overrides via {@see register()}.
+     * capability => registry of provider invocables, keyed under `prism-plus.capabilities`.
      *
-     * @var array<string, InvocableRegistry>
+     * @var BasicRegistry<InvocableRegistry>
      */
-    protected array $capabilities = [];
+    protected BasicRegistry $entries;
 
     public function __construct(
         protected Application $app,
-    ) {}
+    ) {
+        $this->entries = BasicRegistry::for($this);
+
+        foreach (self::BUILT_IN_CAPABILITIES as $capability) {
+            $this->entries->register($capability, $this->seed($capability), by: self::class);
+        }
+    }
 
     /**
-     * The registry for a capability — the middle of the registry-of-registries. Created and seeded
-     * with the package's built-in providers on first access.
+     * The registry for a capability — the middle of the registry-of-registries. A capability this
+     * package ships is already seeded; an unknown name is CREATED here rather than missed, because
+     * naming a new capability is how a host adds one.
      */
     public function capability(string $capability): InvocableRegistry
     {
         $capability = $this->resolveName($capability);
 
-        return $this->capabilities[$capability] ??= $this->seed($capability);
+        $existing = $this->entries->tryResolve($capability);
+
+        if ($existing instanceof InvocableRegistry) {
+            return $existing;
+        }
+
+        $registry = $this->seed($capability);
+
+        $this->entries->register($capability, $registry, by: self::class);
+
+        return $registry;
     }
 
     /**
@@ -81,12 +143,33 @@ class PrismPlusManager
      * seam. Re-registering under the same capability+provider key overrides the prior binding
      * (popcorn semantics), so a default swaps for a tenant-specific binding without callers changing.
      * Registering the first provider under a brand-new capability key *is* adding a capability.
+     *
+     * WIDENED from {@see Registry::register()} rather than shadowing it — contravariance, so this is
+     * still the contract's method and every historical `register('rerank', $invocable)` caller keeps
+     * working. The entry type routes the write: an {@see Invocable} goes one tier DOWN into the
+     * capability's own registry (the historical meaning), an {@see InvocableRegistry} is the entry of
+     * THIS registry and lands on the outer map.
      */
-    public function register(string $capability, Invocable $invocable): static
+    public function register(RegistryKey|string $key, mixed $entry = null, ?string $by = null, ?string $ability = null): static
     {
-        $this->capability($capability)->register($invocable);
+        if ($entry instanceof InvocableRegistry) {
+            $this->entries->register($this->resolveName((string) $key), $entry, $by, $ability);
 
-        return $this;
+            return $this;
+        }
+
+        if ($entry instanceof Invocable) {
+            $this->capability((string) $key)->register($entry, by: $by, ability: $ability);
+
+            return $this;
+        }
+
+        throw new InvalidArgumentException(
+            'PrismPlusManager holds one InvocableRegistry per capability, so `register($capability, '
+                .'$entry)` needs either an Invocable (registered as a PROVIDER inside that capability) '
+                .'or an InvocableRegistry (registered AS the capability). Registering a capability name '
+                .'with no entry would store null under a key the declaration says holds a registry.'
+        );
     }
 
     /**
@@ -95,11 +178,59 @@ class PrismPlusManager
      */
     public function forget(string $capability, string $provider): static
     {
-        $capability = $this->resolveName($capability);
+        $registry = $this->entries->tryResolve($this->resolveName($capability));
 
-        if (isset($this->capabilities[$capability])) {
-            $this->capabilities[$capability]->forget($this->resolveName($provider));
+        if ($registry instanceof InvocableRegistry) {
+            $registry->forget($this->resolveName($provider));
         }
+
+        return $this;
+    }
+
+    /**
+     * The capability names, in registration order, spelled the way callers register them — the
+     * caller's relative key, not the absolute one the index holds (ticket 20 D2).
+     *
+     * @return list<string>
+     */
+    public function capabilities(): array
+    {
+        return $this->entries->relativeKeys();
+    }
+
+    public function has(RegistryKey|string $key): bool
+    {
+        return $this->entries->has($key);
+    }
+
+    public function resolve(RegistryKey|string $key): mixed
+    {
+        return $this->entries->resolve($key);
+    }
+
+    public function tryResolve(RegistryKey|string $key): mixed
+    {
+        return $this->entries->tryResolve($key);
+    }
+
+    public function matches(RegistryKey|string $key): array
+    {
+        return $this->entries->matches($key);
+    }
+
+    public function keys(): array
+    {
+        return $this->entries->keys();
+    }
+
+    public function unfiltered(): Registry
+    {
+        return $this->entries->unfiltered();
+    }
+
+    public function authorizeWith(?Authorizer $authorizer): static
+    {
+        $this->entries->authorizeWith($authorizer);
 
         return $this;
     }
@@ -121,8 +252,11 @@ class PrismPlusManager
     }
 
     /**
-     * Seed a capability's registry with the package's built-in providers. A capability with no
-     * built-ins (a host-defined one) gets an empty registry the host then registers into.
+     * Build a capability's registry, seeded with the package's built-in providers. A capability with
+     * no built-ins (a host-defined one) gets an empty registry the host then registers into.
+     *
+     * Reads no config: every driver is built inside a closure on the invocable, so seeding at
+     * construction snapshots nothing a later registrant or a config flip could change.
      */
     protected function seed(string $capability): InvocableRegistry
     {

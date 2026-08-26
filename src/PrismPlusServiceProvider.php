@@ -5,6 +5,7 @@ namespace Rushing\PrismPlus;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
 use Prism\Prism\Prism;
+use Rushing\Popcorn\Registries\RegistryIndex;
 use Rushing\PrismCassette\CassetteManager;
 use Rushing\PrismPlus\Facades\PrismPlus as PrismPlusFacade;
 use Rushing\PrismPlus\Serializers\ModelListingSerializer;
@@ -37,6 +38,25 @@ class PrismPlusServiceProvider extends ServiceProvider
 
         $this->registerRerankCassetteSerializer();
         $this->registerModelListingCassetteSerializer();
+
+        $this->describeCapabilityRegistry();
+    }
+
+    /**
+     * Put the capability map into the host's {@see RegistryIndex} — declaring and indexing are two
+     * acts (registry-kernel ticket 21 D1), and this is the second one: without it the class carries a
+     * correct `#[IsRegistry]` that no `popcorn:registries`, doctor or conformance audit can see.
+     *
+     * Last in `boot()`, after the serializers, so anything this provider registers is already in
+     * place. Host-defined capabilities registered from a host provider (splicewire-app's `retrieval`)
+     * land on the same singleton afterwards and are visible through it.
+     */
+    protected function describeCapabilityRegistry(): void
+    {
+        $this->app->make(RegistryIndex::class)->describe(
+            $this->app->make(PrismPlusManager::class),
+            by: self::class,
+        );
     }
 
     /**
