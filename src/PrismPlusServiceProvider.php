@@ -51,13 +51,7 @@ class PrismPlusServiceProvider extends ServiceProvider
      * place. Host-defined capabilities registered from a host provider (splicewire-app's `retrieval`)
      * land on the same singleton afterwards and are visible through it.
      */
-    protected function describeCapabilityRegistry(): void
-    {
-        $this->app->make(RegistryIndex::class)->describe(
-            $this->app->make(PrismPlusManager::class),
-            by: self::class,
-        );
-    }
+    protected function describeCapabilityRegistry(): void {}
 
     /**
      * Teach prism-cassette to tape the rerank capability. prism-cassette is a hard dependency of
