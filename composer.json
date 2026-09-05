@@ -25,7 +25,7 @@
         "illuminate/support": "^11.0|^12.0|^13.0",
         "prism-php/prism": "*",
         "rushing/laravel-popcorn": "*",
-        "rushing/prism-cassette": "*",
+        "rushing/prism-cassette": "dev-main",
         "spatie/laravel-data": "^4.0|^5.0"
     },
     "repositories": [
