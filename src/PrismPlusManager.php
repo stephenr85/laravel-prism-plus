@@ -12,8 +12,8 @@ use Rushing\Popcorn\Registries\BasicRegistry;
 use Rushing\Popcorn\Registries\Exceptions\RegistryMiss;
 use Rushing\Popcorn\Registries\Gated;
 use Rushing\Popcorn\Registries\IsRegistry;
-use Rushing\Popcorn\Registries\OnDuplicate;
-use Rushing\Popcorn\Registries\Optionality;
+use Rushing\Popcorn\Registries\OnKeyDuplicate;
+use Rushing\Popcorn\Registries\PopulationRequirement;
 use Rushing\Popcorn\Registries\Registry;
 use Rushing\Popcorn\Registries\RegistryKey;
 use Rushing\PrismPlus\Contracts\ModelListProvider;
@@ -65,8 +65,8 @@ use Rushing\PrismPlus\Providers\VoyageRerankProvider;
 #[IsRegistry(
     root: 'prism-plus.capabilities',
     entryType: InvocableRegistry::class,
-    onDuplicate: OnDuplicate::Supersede,
-    optionality: Optionality::Optional,
+    onKeyDuplicate: OnKeyDuplicate::Supersede,
+    populationRequirement: PopulationRequirement::Optional,
     description: 'PrismPlus capabilities — each one a registry of the provider invocables that answer it. The entry at a capability key is itself a registry (ticket 26 D5): reading `rerank` gives you the registry of rerank providers, not a provider. Registering the first provider under an unknown capability name IS adding a capability, which is why a miss on this outer map is created rather than thrown for by `capability()`.',
 )]
 class PrismPlusManager implements Gated, Registry
