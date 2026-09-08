@@ -1,6 +1,6 @@
 {
     "name": "rushing/laravel-prism-plus",
-    "description": "Wrap-and-extend over Prism — delegates the existing modalities to prism-php/prism and adds the ones Prism has no slot for (rerank, and later audio/video) as parallel first-class modalities that reuse Prism's own provider credentials.",
+    "description": "Wrap-and-extend over Prism \u2014 delegates the existing modalities to prism-php/prism and adds the ones Prism has no slot for (rerank, and later audio/video) as parallel first-class modalities that reuse Prism's own provider credentials.",
     "keywords": [
         "laravel",
         "prism",
@@ -29,6 +29,27 @@
         "spatie/laravel-data": "^4.0|^5.0"
     },
     "repositories": [
+        {
+            "type": "path",
+            "url": "../../rushing/laravel-popcorn",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "../../rushing/php-popcorn",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "../../rushing/prism-cassette",
+            "options": {
+                "symlink": true
+            }
+        },
         {
             "//": "Git fallbacks for a fresh standalone clone with no sibling checkout (e.g. the package's own CI), since neither is on Packagist.",
             "type": "git",
