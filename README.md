@@ -184,6 +184,20 @@ machinery. Pair it with its `Data` request/response VOs and one typed accessor a
 
 ---
 
+## Registries
+
+This package declares one registry:
+
+- [`prism-plus.capabilities`](docs/registries/prism-plus.capabilities.mdx): one entry per
+  capability, each a popcorn `InvocableRegistry` of providers. The package registers `rerank`,
+  `video` and `models`.
+
+The inner registries are popcorn's own, so a provider entry follows
+[`popcorn.invocables`](https://github.com/stephenr85/php-popcorn/blob/main/docs/registries/popcorn.invocables.mdx)
+semantics.
+
+---
+
 ## Configuration
 
 ```php
