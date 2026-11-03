@@ -1,0 +1,97 @@
+---
+title: PrismPlus capabilities
+segment: prism-plus.capabilities
+nav_order: 100
+excerpt: The AI capabilities Prism has no slot for (rerank, video, models), each a registry of the providers that answer it.
+---
+
+# PrismPlus capabilities
+
+`prism-plus.capabilities` is a **registry of registries**. Each key is a capability that
+[Prism](https://github.com/prism-php/prism) has no modality slot for, such as `rerank` or `video`,
+and each entry is itself an `InvocableRegistry` holding the **providers** that answer that
+capability: `voyageai` and `cohere` for rerank, `fal` for video. A provider is an ordinary popcorn
+invocable, array in and array out, with the typed vendor driver behind it.
+
+```
+capability ──► InvocableRegistry ──► provider ──► Invocable
+"rerank"                             "voyageai", "cohere"
+"video"                              "fal"
+```
+
+The typed front door, `PrismPlus::rerank()`, `video()` and `models()`, picks the capability, picks
+a provider (the one you name, or the configured default) and invokes it.
+
+{/* registry-facts:start — generated from the #[IsRegistry] declaration by `splicewire:beam:docs:registries:scaffold`. Rerun the command; do not edit between these markers. */}
+
+- **Root:** `prism-plus.capabilities`
+- **Entries:** `Rushing\Popcorn\InvocableRegistry`
+- **Duplicate keys:** Supersede — a later registration under a taken key replaces the earlier entry, in its place
+- **Population:** Optional — an empty registry is normal
+- **Order:** `100` (display order, ascending)
+- **Declared by:** `Rushing\PrismPlus\PrismPlusManager`
+
+{/* registry-facts:end */}
+
+## What ships
+
+Three capabilities, registered when `PrismPlusManager` is constructed:
+
+- **`rerank`**, with providers `voyageai` and `cohere`.
+- **`video`**, with provider `fal`.
+- **`models`**, listing the models of each Prism provider that has a listing driver (`openai`,
+  `anthropic`, `mistral`, `gemini` and others).
+
+`config('prism-plus.defaults')` names the provider used when a caller names none, for example
+`'rerank' => 'voyageai'`.
+
+## Adding a provider
+
+Register an invocable under a capability. It keys itself by its own name, and no package edit is
+needed:
+
+```php
+use Rushing\Popcorn\Binding;
+use Rushing\Popcorn\Invocables\LocalInvocable;
+use Rushing\Popcorn\Invocables\RemoteInvocable;
+use Rushing\PrismPlus\PrismPlusManager;
+
+$manager = app(PrismPlusManager::class);
+
+// A local PHP driver…
+$manager->register('rerank', new LocalInvocable('jina', fn (array $input) => [/* … */]));
+
+// …or a tenant's own webhook, answered out of process:
+$manager->register('rerank', new RemoteInvocable('acme', Binding::Webhook, $httpTransport));
+```
+
+`forget('rerank', 'acme')` removes a provider again, which is how a per-tenant registration is torn
+down on a tenant switch.
+
+## Adding a capability
+
+Registering the first provider under a new capability name creates that capability, so a new key
+is all it takes. `capability('classify')` likewise returns the capability's provider registry,
+creating an empty one when the name is new, rather than throwing. Pair a new capability with its
+own request and response Data classes and a typed accessor if callers should get typed values.
+
+You can also register a whole `InvocableRegistry` as the entry, `register('classify', $registry)`,
+to replace a capability and every provider in it at once. Any other kind of entry is refused.
+
+## Names and duplicates
+
+Capability names are lowercased, so `Rerank` and `rerank` are the same capability; `capabilities()`
+lists them. A provider registers under its invocable's own name, which must be a legal lowercase
+key, and the typed accessors lowercase the provider name a caller passes.
+
+The policy is **supersede** at both levels. Registering a provider name that's taken replaces that
+provider, so you can swap a shipped default for your own binding without callers changing.
+Registering a registry under a taken capability replaces the whole capability.
+
+## Going deeper
+
+The source is
+[`PrismPlusManager`](https://github.com/stephenr85/laravel-prism-plus/blob/main/src/PrismPlusManager.php).
+The [laravel-prism-plus README](https://github.com/stephenr85/laravel-prism-plus#readme) has
+quickstarts for rerank and async video, credentials and fixture recording. Each capability's
+providers live in popcorn's [`InvocableRegistry`](https://github.com/stephenr85/php-popcorn/blob/main/src/InvocableRegistry.php).
