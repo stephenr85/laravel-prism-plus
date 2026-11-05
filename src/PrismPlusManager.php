@@ -106,7 +106,7 @@ class PrismPlusManager implements Gated, Registry
         $this->entries = BasicRegistry::for($this);
 
         foreach (self::BUILT_IN_CAPABILITIES as $capability) {
-            $this->entries->register($capability, $this->seed($capability), by: self::class);
+            $this->entries->register($capability, $this->seed($capability), by: 'rushing/laravel-prism-plus');
         }
     }
 
@@ -127,7 +127,7 @@ class PrismPlusManager implements Gated, Registry
 
         $registry = $this->seed($capability);
 
-        $this->entries->register($capability, $registry, by: self::class);
+        $this->entries->register($capability, $registry, by: 'rushing/laravel-prism-plus');
 
         return $registry;
     }

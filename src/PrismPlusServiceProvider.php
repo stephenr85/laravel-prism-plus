@@ -5,6 +5,7 @@ namespace Rushing\PrismPlus;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
 use Prism\Prism\Prism;
+use Rushing\Popcorn\Registries\Registrant;
 use Rushing\Popcorn\Registries\RegistryIndex;
 use Rushing\PrismCassette\CassetteManager;
 use Rushing\PrismPlus\Facades\PrismPlus as PrismPlusFacade;
@@ -14,6 +15,11 @@ use Rushing\PrismPlus\Serializers\RerankSerializer;
 class PrismPlusServiceProvider extends ServiceProvider
 {
     public function register(): void
+    {
+        Registrant::scoped('rushing/laravel-prism-plus', $this->registerScoped(...));
+    }
+
+    private function registerScoped(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/prism-plus.php', 'prism-plus');
 
@@ -27,6 +33,11 @@ class PrismPlusServiceProvider extends ServiceProvider
     }
 
     public function boot(): void
+    {
+        Registrant::scoped('rushing/laravel-prism-plus', $this->bootScoped(...));
+    }
+
+    private function bootScoped(): void
     {
         if (class_exists(AliasLoader::class)) {
             AliasLoader::getInstance()->alias('PrismPlus', PrismPlusFacade::class);
