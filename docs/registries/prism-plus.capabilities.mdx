@@ -86,9 +86,10 @@ Capability names are lowercased, so `Rerank` and `rerank` are the same capabilit
 lists them. A provider registers under its invocable's own name, which must be a legal lowercase
 key, and the typed accessors lowercase the provider name a caller passes.
 
-The policy is **supersede** at both levels. Registering a provider name that's taken replaces that
-provider, so you can swap a shipped default for your own binding without callers changing.
-Registering a registry under a taken capability replaces the whole capability.
+The [**duplicate-key policy**](/beam/docs/foundations/registries#key-policies) is **supersede**
+at both levels. Registering a provider name that's taken replaces that provider, so you can swap a
+shipped default for your own binding without callers changing. Registering a registry under a taken
+capability replaces the whole capability.
 
 ## Going deeper
 
